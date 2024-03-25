@@ -15,3 +15,9 @@ class Team(TimestampedModel):
     version = models.IntegerField()
     view = models.IntegerField()
     is_approved = models.BooleanField(default=False)
+
+
+class TeamApply(TimestampedModel):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    is_approved = models.BooleanField(default=False)
