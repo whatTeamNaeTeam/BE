@@ -28,3 +28,8 @@ class TeamTech(TimestampedModel):
     need_num = models.IntegerField()
     current_num = models.IntegerField()
     tech = models.CharField(max_length=15)
+
+
+class TeamImage(TimestampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    url = models.CharField(max_length=50)
