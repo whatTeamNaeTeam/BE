@@ -30,7 +30,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = "wtnt.CustomUser"
+AUTH_USER_MODEL = "user.CustomUser"
 
 REST_USE_JWT = True
 
