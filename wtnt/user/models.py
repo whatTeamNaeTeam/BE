@@ -31,3 +31,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
 
     def has_module_perms(self, app_label):
         return True
+
+
+class UserUrls(TimestampedModel):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    url = models.CharField(max_length=50)
+    category = models.CharField(max_length=10)
