@@ -33,3 +33,8 @@ class TeamTech(TimestampedModel):
 class TeamImage(TimestampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     url = models.CharField(max_length=50)
+
+
+class Likes(TimestampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
