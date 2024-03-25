@@ -21,3 +21,10 @@ class TeamApply(TimestampedModel):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     is_approved = models.BooleanField(default=False)
+
+
+class TeamTech(TimestampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    need_num = models.IntegerField()
+    current_num = models.IntegerField()
+    tech = models.CharField(max_length=15)
