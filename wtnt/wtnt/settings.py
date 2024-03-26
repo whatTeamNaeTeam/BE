@@ -30,6 +30,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "user.CustomUser"
+
+REST_USE_JWT = True
+
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+
 
 # Application definition
 
@@ -41,6 +50,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "user",
+    "team",
 ]
 
 MIDDLEWARE = [
@@ -79,8 +90,12 @@ WSGI_APPLICATION = "wtnt.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": env("MYSQLDB_NAME"),
+        "USER": env("MYSQLDB_USERNAME"),
+        "PASSWORD": env("MYSQLDB_PW"),
+        "HOST": env("MYSQLDB_HOST"),
+        "PORT": env("MYSQLDB_PORT"),
     }
 }
 
