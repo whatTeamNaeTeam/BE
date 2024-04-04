@@ -9,7 +9,7 @@ from core.models import TimestampedModel
 
 class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     email = models.EmailField(unique=True)
-    social_id = models.IntegerField()
+    social_id = models.IntegerField(null=True)
     name = models.CharField(max_length=5)
     university = models.CharField(max_length=8, null=True)
     club = models.CharField(max_length=10, null=True)
