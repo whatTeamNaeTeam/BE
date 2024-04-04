@@ -25,20 +25,10 @@ class GithubLoginView(SocialLoginView):
         response = super().post(request, *args, **kwargs)
         response_data = response.data
         
-        if not response_data["user"]["email"]:
-            request_data = json.loads(request.body)
-
-            user_id = response_data["user"]["pk"]
-            extra_data = SocialAccount.objects.get(user_id=user_id).extra_data
-        
-            user = User.objects.get(id=user_id)
-            user.student_num = str(request_data.get("student_num"))
-            user.name = request_data.get("name")
-            user.email = extra_data.get("login") + "@github.com"
-            user.image = extra_data.get("avatar_url")
-            user.save()
-
-            return Response(response_data, status=status.HTTP_201_CREATED)
+        if response_data["user"]["email"]:
+            response_data["registered"] = True   
+        else:
+            response_data["registered"] = False
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -61,3 +51,21 @@ class GithubOAuthCallBackView(APIView):
         response = requests.post(url, json=payload, headers=headers)
 
         return response
+
+
+class FinishGithubLoginView(APIView):
+    def post(self, request):
+        request_data = json.loads(request.body)
+
+        user_id = request_data["user_id"]
+        extra_data = SocialAccount.objects.get(user_id=user_id).extra_data
+    
+        user = User.objects.get(id=user_id)
+        user.student_num = str(request_data.get("student_num"))
+        user.name = request_data.get("name")
+        user.email = extra_data.get("login") + "@github.com"
+        user.image = extra_data.get("avatar_url")
+
+        user.save()
+
+        return Response({"success": True}, status=status.HTTP_201_CREATED)
