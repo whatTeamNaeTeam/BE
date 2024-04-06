@@ -21,3 +21,18 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
                 response.content = response.render().rendered_content
         
         return response
+
+
+class AttachJWTFromCookieToHeaderMiddleware(MiddlewareMixin):
+    def __init__(self, get_response):
+        super().__init__(get_response)
+        self.NOT_APIS = ['github/login', 'github/finish', 'token/refresh']
+
+    def process_request(self, request):
+        path = request.path_info
+        is_valid = any(api in path for api in self.NOT_APIS)
+
+        if is_valid:
+            if request.META.get('HTTP_FROM', None) == 'web':
+                request.META['access'] = request.COOKIES.get('access', None)
+                request.META['refresh'] = request.COOKIES.get('refresh', None)
