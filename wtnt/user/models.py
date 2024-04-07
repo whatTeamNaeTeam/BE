@@ -9,12 +9,13 @@ from core.models import TimestampedModel
 
 class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     email = models.EmailField(unique=True)
+    social_id = models.IntegerField(null=True)
     name = models.CharField(max_length=5)
     university = models.CharField(max_length=8, null=True)
     club = models.CharField(max_length=10, null=True)
     student_num = models.CharField(max_length=20, null=True)
     tech = models.CharField(max_length=200, null=True)
-    image = models.CharField(max_length=50, null=True)
+    image = models.CharField(max_length=200, null=True)
     is_apporoved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
