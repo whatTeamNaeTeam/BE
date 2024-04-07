@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 
@@ -69,3 +71,21 @@ class FinishGithubLoginView(APIView):
         user.save()
 
         return Response({"success": True}, status=status.HTTP_201_CREATED)
+
+
+class WtntTokenRefreshView(TokenRefreshView):
+    def post(self, request: Request, *args, **kwargs):
+        refresh_token = request.META.get("HTTP_REFRESH", None)
+        serializer = self.get_serializer(data={"refresh": refresh_token})
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        token = serializer.validated_data
+        response = Response({"success": True}, status=status.HTTP_200_OK)
+        response["refresh"] = token["refresh"]
+        response["access"] = token["access"]
+
+        return response
