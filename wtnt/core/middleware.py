@@ -1,4 +1,5 @@
 from django.utils.deprecation import MiddlewareMixin
+from rest_framework import status
 
 
 class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
@@ -12,9 +13,12 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
         is_valid = any(api in path for api in self.APIS)
         is_refresh = True if self.REFRESH in path else False
 
-        if is_valid or is_refresh:
+        if (
+            is_valid
+            or is_refresh
+            and (response.status_code == status.HTTP_200_OK or response.status_code == status.HTTP_201_CREATED)
+        ):
             if request.META.get("HTTP_FROM", None) == "web":
-                print(response.data)
                 response.set_cookie("refresh", response["refresh"])
                 response.set_cookie("access", response["access"])
 
