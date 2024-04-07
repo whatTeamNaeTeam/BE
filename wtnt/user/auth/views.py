@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import AccessToken
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 
@@ -16,17 +15,18 @@ import json
 
 User = get_user_model()
 
+
 class GithubLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
-    callback_url = "http://localhost:8000/api/user/github/callback"
+    callback_url = "http://localhost:8000/api/auth/github/callback"
     client_class = OAuth2Client
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         response_data = response.data
-        
+
         if response_data["user"]["email"]:
-            response_data["registered"] = True   
+            response_data["registered"] = True
         else:
             response_data["registered"] = False
 
@@ -43,9 +43,9 @@ class GithubOAuthCallBackView(APIView):
                 {"error": "Failed to process with GithubLoginView"},
                 status=response.status_code,
             )
-        
+
     def send_code_to_github_login_view(self, code: str):
-        url = "http://localhost:8000/api/user/github/login"
+        url = "http://localhost:8000/api/auth/github/login"
         payload = {"code": code}
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, json=payload, headers=headers)
@@ -59,7 +59,7 @@ class FinishGithubLoginView(APIView):
 
         user_id = request_data["user_id"]
         extra_data = SocialAccount.objects.get(user_id=user_id).extra_data
-    
+
         user = User.objects.get(id=user_id)
         user.student_num = str(request_data.get("student_num"))
         user.name = request_data.get("name")
