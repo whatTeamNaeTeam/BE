@@ -39,7 +39,7 @@ REST_AUTH = {
     "TOKEN_MODEL": None,
     "USE_JWT": True,
     "JWT_AUTH_COOKIE": "access_token",
-    'JWT_AUTH_REFRESH_COOKIE': "refresh_token",
+    "JWT_AUTH_REFRESH_COOKIE": "refresh_token",
     "JWT_AUTH_HTTPONLY": False,
     "SESSION_LOGIN": False,
 }
@@ -69,9 +69,7 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
 }
 
 
@@ -148,6 +146,17 @@ DATABASES = {
         "PASSWORD": env("MYSQLDB_PW"),
         "HOST": env("MYSQLDB_HOST"),
         "PORT": env("MYSQLDB_PORT"),
+    }
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
     }
 }
 
