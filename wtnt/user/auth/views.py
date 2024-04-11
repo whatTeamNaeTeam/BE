@@ -65,6 +65,7 @@ class FinishGithubLoginView(APIView):
         user = User.objects.get(id=user_id)
         user.student_num = str(request_data.get("student_num"))
         user.name = request_data.get("name")
+        user.social_id = extra_data.get("id")
         user.email = extra_data.get("login") + "@github.com"
         user.image = extra_data.get("avatar_url")
 
