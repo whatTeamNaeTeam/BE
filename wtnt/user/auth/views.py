@@ -5,13 +5,19 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
+
+from datetime import timedelta, datetime
 
 import requests
 import json
+
+from user.serializers import UserSerializer
 
 # Create your views here.
 
@@ -26,11 +32,20 @@ class GithubLoginView(SocialLoginView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         response_data = response.data
+        refresh_token = response_data.get("refresh", None)
+        user_id = response_data["user"]["pk"]
+
+        if refresh_token:
+            cache.set(user_id, refresh_token)
+            cache.expire_at(user_id, datetime.now() + timedelta(days=7))
+            response_data.pop("refresh")
 
         if response_data["user"]["email"]:
             response_data["registered"] = True
         else:
             response_data["registered"] = False
+
+        response_data.pop("user")
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -56,13 +71,14 @@ class GithubOAuthCallBackView(APIView):
 
 
 class FinishGithubLoginView(APIView):
+    serializer_class = UserSerializer
+
     def post(self, request):
         request_data = json.loads(request.body)
 
-        user_id = request_data["user_id"]
-        extra_data = SocialAccount.objects.get(user_id=user_id).extra_data
+        extra_data = SocialAccount.objects.get(user_id=request.user.id).extra_data
 
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=request.user.id)
         user.student_num = str(request_data.get("student_num"))
         user.name = request_data.get("name")
         user.social_id = extra_data.get("id")
@@ -71,12 +87,20 @@ class FinishGithubLoginView(APIView):
 
         user.save()
 
-        return Response({"success": True}, status=status.HTTP_201_CREATED)
+        serializer = self.serializer_class(user)
+
+        return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
 
 class WtntTokenRefreshView(TokenRefreshView):
     def post(self, request: Request, *args, **kwargs):
-        refresh_token = request.META.get("HTTP_REFRESH", None)
+        _, access_token = request.META.get("HTTP_AUTHORIZATION").split(" ")
+        print(access_token)
+        user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+
+        refresh_token = cache.get(user_id)
+        if not refresh_token:
+            return Response({"error": "Expired Refresh Token"}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = self.get_serializer(data={"refresh": refresh_token})
 
         try:
@@ -86,7 +110,7 @@ class WtntTokenRefreshView(TokenRefreshView):
 
         token = serializer.validated_data
         response = Response({"success": True}, status=status.HTTP_200_OK)
-        response["refresh"] = token["refresh"]
+
         response["access"] = token["access"]
 
         return response
