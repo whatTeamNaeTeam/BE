@@ -16,7 +16,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     student_num = models.CharField(max_length=20, null=True)
     tech = models.CharField(max_length=200, null=True)
     image = models.CharField(max_length=200, null=True)
-    is_apporoved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
