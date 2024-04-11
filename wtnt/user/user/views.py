@@ -15,12 +15,14 @@ class UserManageView(APIView):
 
     def get(self, request):
         queryset = User.objects.filter(is_approved=False)
-        serializer = self.serializer_class(queryset, many=True)
-
-        return Response(serializer.data)
+        if queryset:
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, *args, **kwargs):
-        user_id = request.data.get("id")
+        user_id = kwargs.get("user_id")
         user = User.objects.get(id=user_id)
 
         serializer = ApproveUserSerializer(user, data={"is_approved": True}, partial=True)
@@ -40,3 +42,14 @@ class UserDeleteView(APIView):
         serializer = self.serializer_class(queryset, many=True)
 
         return Response(serializer.data)
+
+    def delete(self, request, *args, **kwargs):
+        user_id = kwargs.get("user_id")
+        try:
+            user = User.objects.get(id=user_id)
+            user.delete()
+
+            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
