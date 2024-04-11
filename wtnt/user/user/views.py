@@ -29,3 +29,14 @@ class UserManageView(APIView):
             return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserDeleteView(APIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = ApproveUserSerializer
+
+    def get(self, request):
+        queryset = User.objects.filter(is_approved=True, is_superuser=False)
+        serializer = self.serializer_class(queryset, many=True)
+
+        return Response(serializer.data)
