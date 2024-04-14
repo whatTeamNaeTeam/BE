@@ -31,7 +31,15 @@ DEBUG = True
 
 SITE_ID = 1
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_CREDENTIALS = True
+
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + ["x-from"]
 
 AUTH_USER_MODEL = "user.CustomUser"
 
@@ -99,9 +107,12 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.github",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "drf_yasg",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "core.middleware.AttachJWTFromCookieToHeaderMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
