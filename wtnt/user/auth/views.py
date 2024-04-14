@@ -4,6 +4,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -52,12 +53,14 @@ class GithubLoginView(SocialLoginView):
         response_data.pop("access")
 
         response = Response(response_data, status=status.HTTP_200_OK)
-        response["access"] = access_token
+        response.headers["access"] = access_token
 
         return response
 
 
 class GithubOAuthCallBackView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request: Request):
         if code := request.GET.get("code"):
             response = self.send_code_to_github_login_view(code)
@@ -102,7 +105,6 @@ class FinishGithubLoginView(APIView):
 class WtntTokenRefreshView(TokenRefreshView):
     def post(self, request: Request, *args, **kwargs):
         _, access_token = request.META.get("HTTP_AUTHORIZATION").split(" ")
-        print(access_token)
         user_id = AccessToken(access_token, verify=False).payload.get("user_id")
 
         refresh_token = cache.get(user_id)
