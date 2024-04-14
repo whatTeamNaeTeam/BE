@@ -33,6 +33,7 @@ class GithubLoginView(SocialLoginView):
         response = super().post(request, *args, **kwargs)
         response_data = response.data
         refresh_token = response_data.get("refresh", None)
+        access_token = response_data.get("access", None)
         user_id = response_data["user"]["pk"]
 
         if refresh_token:
@@ -40,14 +41,20 @@ class GithubLoginView(SocialLoginView):
             cache.expire_at(user_id, datetime.now() + timedelta(days=7))
             response_data.pop("refresh")
 
-        if response_data["user"]["email"]:
-            response_data["registered"] = True
-        else:
+        _, email = response_data["user"]["email"].split("@")
+
+        if "sample.com" in email:
             response_data["registered"] = False
+        else:
+            response_data["registered"] = True
 
         response_data.pop("user")
+        response_data.pop("access")
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        response = Response(response_data, status=status.HTTP_200_OK)
+        response["access"] = access_token
+
+        return response
 
 
 class GithubOAuthCallBackView(APIView):
