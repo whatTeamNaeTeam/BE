@@ -18,7 +18,9 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
             and (response.status_code == status.HTTP_200_OK or response.status_code == status.HTTP_201_CREATED)
         ):
             if request.META.get("HTTP_X_FROM", None) == "web":
-                response.set_cookie("access", response.headers.get("access", None), httponly=True)
+                response.set_cookie(
+                    "access", response.headers.get("access", None), httponly=True, samesite="none", secure=True
+                )
                 if is_valid:
                     del response.headers["access"]
 
