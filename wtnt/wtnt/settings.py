@@ -171,7 +171,6 @@ CACHES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -190,6 +189,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+# S3
+AWS_CLIENT_ID = env("AWS_CLIENT_ID")
+AWS_CLIENT_SECRET = env("AWS_CLIENT_SECRET")
+BUCKET_NAME = env("AWS_BUCKET_NAME")
+AWS_REGION = env("AWS_S3_REGION_NAME")
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
