@@ -31,6 +31,11 @@ class TeamTech(TimestampedModel):
     tech = models.CharField(max_length=15)
 
 
+class TeamURL(TimestampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    url = models.CharField(max_length=200)
+
+
 class Likes(TimestampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
