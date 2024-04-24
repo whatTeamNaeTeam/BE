@@ -10,19 +10,19 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         path = request.path_info
-        is_valid = any(path in api for api in self.API)
+        is_valid = any(api in path for api in self.API)
         is_refresh = True if self.REFRESH in path else False
-
         if (
             is_valid
             or is_refresh
             and (response.status_code == status.HTTP_200_OK or response.status_code == status.HTTP_201_CREATED)
         ):
             if request.META.get("HTTP_X_FROM", None) == "web":
-                response.set_cookie("access", response["access"], httponly=True)
-
+                response.set_cookie(
+                    "access", response.headers.get("access", None), httponly=True, samesite="none", secure=True
+                )
                 if is_valid:
-                    response.data.pop("access")
+                    del response.headers["access"]
 
                 response.content = response.render().rendered_content
 
@@ -36,7 +36,7 @@ class AttachJWTFromCookieToHeaderMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         path = request.path_info
-        is_valid = any(path in api for api in self.NOT_API)
+        is_valid = any(api in path for api in self.NOT_API)
 
         if not is_valid:
             if request.META.get("HTTP_X_FROM", None) == "web":

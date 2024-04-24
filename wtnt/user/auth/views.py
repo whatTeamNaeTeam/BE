@@ -4,6 +4,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -15,8 +16,6 @@ from django.core.cache import cache
 from datetime import timedelta, datetime
 
 import requests
-import json
-
 from user.serializers import UserSerializer
 
 # Create your views here.
@@ -26,10 +25,10 @@ User = get_user_model()
 
 class GithubLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
-    callback_url = "http://localhost:8000/api/auth/github/callback"
     client_class = OAuth2Client
 
     def post(self, request, *args, **kwargs):
+        self.callback_url = request.data.get("callback_url")
         response = super().post(request, *args, **kwargs)
         response_data = response.data
         refresh_token = response_data.get("refresh", None)
@@ -42,22 +41,31 @@ class GithubLoginView(SocialLoginView):
             response_data.pop("refresh")
 
         _, email = response_data["user"]["email"].split("@")
+        response_data.pop("user")
 
         if "sample.com" in email:
             response_data["registered"] = False
         else:
             response_data["registered"] = True
+            user = User.objects.get(id=user_id)
+            response_data["user"] = {
+                "name": user.name,
+                "student_num": user.student_num,
+                "id": user.id,
+                "image": user.image,
+            }
 
-        response_data.pop("user")
         response_data.pop("access")
 
         response = Response(response_data, status=status.HTTP_200_OK)
-        response["access"] = access_token
+        response.headers["access"] = access_token
 
         return response
 
 
 class GithubOAuthCallBackView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request: Request):
         if code := request.GET.get("code"):
             response = self.send_code_to_github_login_view(code)
@@ -70,7 +78,7 @@ class GithubOAuthCallBackView(APIView):
 
     def send_code_to_github_login_view(self, code: str):
         url = "http://localhost:8000/api/auth/github/login"
-        payload = {"code": code}
+        payload = {"code": code, "callback_url": "http://localhost:8000/api/auth/github/callback"}
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, json=payload, headers=headers)
 
@@ -81,8 +89,7 @@ class FinishGithubLoginView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        request_data = json.loads(request.body)
-
+        request_data = request.data
         extra_data = SocialAccount.objects.get(user_id=request.user.id).extra_data
 
         user = User.objects.get(id=request.user.id)
@@ -102,7 +109,6 @@ class FinishGithubLoginView(APIView):
 class WtntTokenRefreshView(TokenRefreshView):
     def post(self, request: Request, *args, **kwargs):
         _, access_token = request.META.get("HTTP_AUTHORIZATION").split(" ")
-        print(access_token)
         user_id = AccessToken(access_token, verify=False).payload.get("user_id")
 
         refresh_token = cache.get(user_id)
@@ -118,6 +124,6 @@ class WtntTokenRefreshView(TokenRefreshView):
         token = serializer.validated_data
         response = Response({"success": True}, status=status.HTTP_200_OK)
 
-        response["access"] = token["access"]
+        response.headers["access"] = token["access"]
 
         return response

@@ -8,12 +8,13 @@ from user.models import CustomUser
 
 class Team(TimestampedModel):
     leader = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    name = models.CharField(max_length=10)
-    explain = models.CharField(max_length=100)
-    genre = models.CharField(max_length=5)
-    like = models.IntegerField()
-    version = models.IntegerField()
-    view = models.IntegerField()
+    name = models.CharField(max_length=30, unique=True)
+    explain = models.BinaryField()
+    genre = models.CharField(max_length=30)
+    like = models.IntegerField(default=0)
+    version = models.IntegerField(default=0)
+    view = models.IntegerField(default=0)
+    image = models.CharField(max_length=200, null=True)
     is_approved = models.BooleanField(default=False)
 
 
@@ -26,13 +27,13 @@ class TeamApply(TimestampedModel):
 class TeamTech(TimestampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     need_num = models.IntegerField()
-    current_num = models.IntegerField()
+    current_num = models.IntegerField(default=0)
     tech = models.CharField(max_length=15)
 
 
-class TeamImage(TimestampedModel):
+class TeamURL(TimestampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    url = models.CharField(max_length=50)
+    url = models.CharField(max_length=200)
 
 
 class Likes(TimestampedModel):
