@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 
-from user.serializers import ApproveUserSerializer
+from .serializers import ApproveUserSerializer
 
 User = get_user_model()
 
@@ -14,7 +14,7 @@ class UserManageView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        queryset = User.objects.filter(is_approved=False)
+        queryset = User.objects.filter(is_approved=False, is_superuser=False)
         if queryset:
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data)

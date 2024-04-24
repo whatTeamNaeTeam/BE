@@ -38,5 +38,6 @@ urlpatterns = [
     path("", include("allauth.urls")),
     path("api/", include("user.urls")),
     path("api/", include("team.urls")),
+    path("api/", include("admin.urls")),
     path("admin/", admin.site.urls),
 ]
