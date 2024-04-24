@@ -26,5 +26,16 @@ class TeamCreateSerializerHelper:
 
         return _dict
 
+    def make_urls_data(self, team_id, urls):
+        return [{"team_id": team_id, "url": url} for url in urls]
+
+    def make_techs_data(self, team_id, categories, counts):
+        return [
+            {"team_id": team_id, "tech": category, "need_num": count} for category, count in zip(categories, counts)
+        ]
+
+    def make_response(self, team_data, url_data, tech_data):
+        return {"team": team_data, "urls": url_data, "category": tech_data}
+
 
 createSerializerHelper = TeamCreateSerializerHelper()
