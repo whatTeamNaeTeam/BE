@@ -1,24 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
+from team.models import Team
+
 User = get_user_model()
 
 
-class BaseUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["name", "student_num", "id"]
-
-
-class UserSerializer(BaseUserSerializer):
-    class Meta:
-        model = User
-        fields = BaseUserSerializer.Meta.fields + ["image"]
-
-
-class ApproveUserSerializer(BaseUserSerializer):
+class ApproveUserSerializer(serializers.ModelSerializer):
     is_approved = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = User
-        fields = BaseUserSerializer.Meta.fields + ["is_approved"]
+        fields = ["name", "student_num", "id", "is_approved"]
+
+
+class ApproveTeamSerializer(serializers.ModelSerializer):
+    is_approved = serializers.BooleanField(write_only=True)
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "is_approved"]
