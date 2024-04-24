@@ -38,6 +38,17 @@ class UserManageUpdateView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, *args, **kwargs):
+        user_id = kwargs.get("user_id")
+        try:
+            user = User.objects.get(id=user_id)
+            user.delete()
+
+            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class UserDeleteGetListView(APIView):
     permission_classes = [IsAdminUser]
@@ -92,6 +103,17 @@ class TeamManageUpdateView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, *args, **kwargs):
+        team_id = kwargs.get("team_id")
+        try:
+            team = Team.objects.get(id=team_id)
+            team.delete()
+
+            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class TeamDeleteGetListView(APIView):
     permission_classes = [IsAdminUser]
@@ -117,4 +139,4 @@ class TeamDeleteView(APIView):
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
 
         except User.DoesNotExist:
-            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
