@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Team
+from .models import Team, TeamURL, TeamTech
 
 
 class MyBinaryField(serializers.Field):
@@ -16,4 +16,20 @@ class TeamCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ["leader_id", "name", "explain", "genre", "like", "version", "image"]
+        fields = ["id", "leader_id", "name", "explain", "genre", "like", "version", "image"]
+
+
+class TeamUrlCreateSerializer(serializers.ModelSerializer):
+    team_id = serializers.IntegerField()
+
+    class Meta:
+        model = TeamURL
+        fields = ["id", "team_id", "url"]
+
+
+class TeamTechCreateSerializer(serializers.ModelSerializer):
+    team_id = serializers.IntegerField()
+
+    class Meta:
+        model = TeamTech
+        fields = ["id", "team_id", "tech", "need_num", "current_num"]
