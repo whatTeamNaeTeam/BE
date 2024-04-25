@@ -28,7 +28,14 @@ class GithubLoginView(SocialLoginView):
     client_class = OAuth2Client
 
     def post(self, request, *args, **kwargs):
-        self.callback_url = request.data.get("callback_url")
+        is_web = request.META.get("HTTP_X_FROM", None)
+        if is_web == "web":
+            self.callback_url = "https://local.whatmeow.shop:3001/oauth/callback/github"
+        elif is_web == "app":
+            self.callback_url = "myapp://auth"
+        else:
+            self.callback_url = "http://localhost:8000/api/auth/github/callback"
+
         response = super().post(request, *args, **kwargs)
         response_data = response.data
         refresh_token = response_data.get("refresh", None)

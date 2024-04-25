@@ -14,11 +14,3 @@ class UserSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = BaseUserSerializer.Meta.fields + ["image"]
-
-
-class ApproveUserSerializer(BaseUserSerializer):
-    is_approved = serializers.BooleanField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = BaseUserSerializer.Meta.fields + ["is_approved"]

@@ -34,8 +34,11 @@ class TeamCreateSerializerHelper:
             {"team_id": team_id, "tech": category, "need_num": count} for category, count in zip(categories, counts)
         ]
 
-    def make_response(self, team_data, url_data, tech_data):
+    def make_full_response(self, team_data, url_data, tech_data):
         return {"team": team_data, "urls": url_data, "category": tech_data}
+
+    def make_response(self, team_data, tech_data):
+        return {"team": team_data, "category": tech_data, "urls": None}
 
 
 createSerializerHelper = TeamCreateSerializerHelper()

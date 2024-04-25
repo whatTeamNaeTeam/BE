@@ -24,23 +24,26 @@ class CreateTeamView(APIView):
             createSerializer.save()
 
             team_id = createSerializer.data.get("id")
-            team_urls = createSerializerHelper.make_urls_data(team_id, request.data.getlist("urls"))
-            urlSerializer = TeamUrlCreateSerializer(data=team_urls, many=True)
+            team_techs = createSerializerHelper.make_techs_data(
+                team_id, request.data.getlist("subCategory"), request.data.getlist("memberCount")
+            )
+            techSerializer = TeamTechCreateSerializer(data=team_techs, many=True)
 
-            if urlSerializer.is_valid():
-                team_techs = createSerializerHelper.make_techs_data(
-                    team_id, request.data.getlist("subCategory"), request.data.getlist("memberCount")
-                )
-                techSerializer = TeamTechCreateSerializer(data=team_techs, many=True)
+            if techSerializer.is_valid():
+                if request.data.getlist("urls", None):
+                    team_urls = createSerializerHelper.make_urls_data(team_id, request.data.getlist("urls"))
+                    urlSerializer = TeamUrlCreateSerializer(data=team_urls, many=True)
 
-                if techSerializer.is_valid():
-                    techSerializer.save()
-                    urlSerializer.save()
+                    if urlSerializer.is_valid():
+                        techSerializer.save()
+                        urlSerializer.save()
 
-                    response = createSerializerHelper.make_response(
-                        createSerializer.data, urlSerializer.data, techSerializer.data
-                    )
+                        response = createSerializerHelper.make_full_response(
+                            createSerializer.data, urlSerializer.data, techSerializer.data
+                        )
+                else:
+                    response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
 
-                    return Response(response, status=status.HTTP_201_CREATED)
+                return Response(response, status=status.HTTP_201_CREATED)
 
         return Response({"message": "Error"}, status=status.HTTP_400_BAD_REQUEST)
