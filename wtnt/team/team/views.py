@@ -4,15 +4,15 @@ from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 
 from core.permissions import IsApprovedUser
-from .serializers import TeamCreateSerializer, TeamUrlCreateSerializer, TeamTechCreateSerializer
-from .utils import createSerializerHelper
+from team.serializers import TeamCreateSerializer, TeamUrlCreateSerializer, TeamTechCreateSerializer
+from team.utils import createSerializerHelper
 
 # Create your views here.
 
 User = get_user_model()
 
 
-class CreateTeamView(APIView):
+class TeamView(APIView):
     permission_classes = [IsApprovedUser]
 
     def post(self, request, *args, **kwargs):
