@@ -104,3 +104,20 @@ class TeamApplyView(APIView):
             return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        id = kwargs.get("team_id")
+        try:
+            apply = TeamApply.objects.get(id=id)
+
+            team = Team.objects.get(id=apply.team_id)
+
+            if team.leader != request.user.id:
+                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+
+            apply.delete()
+
+            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+        except TeamApply.DoesNotExist:
+            return Response({"error": "Apply Not Found"}, status=status.HTTP_404_NOT_FOUND)
