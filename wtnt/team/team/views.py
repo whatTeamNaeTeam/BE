@@ -87,7 +87,10 @@ class TeamApplyView(APIView):
         serializer = self.serializer_class(data=apply_data)
 
         if serializer.is_valid():
-            serializer.save()
+            try:
+                serializer.save()
+            except Exception:
+                return Response({"error": "중복된 지원입니다"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
