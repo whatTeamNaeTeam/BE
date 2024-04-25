@@ -11,6 +11,7 @@ from team.serializers import (
     TeamApplySerializer,
 )
 from team.utils import createSerializerHelper, applySerializerHelper
+from team.models import TeamApply, Team
 
 # Create your views here.
 
@@ -57,6 +58,20 @@ class TeamView(APIView):
 class TeamApplyView(APIView):
     permission_classes = [IsApprovedUser]
     serializer_class = TeamApplySerializer
+
+    def get(self, request, *args, **kwargs):
+        team_id = kwargs.get("team_id")
+        queryset = TeamApply.objects.filter(is_approved=False, team_id=team_id)
+        team = Team.objects.get(id=team_id)
+
+        if team.leader != request.user.id:
+            return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+
+        if queryset:
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, *args, **kwargs):
         bio = request.data.get("bio", None)
