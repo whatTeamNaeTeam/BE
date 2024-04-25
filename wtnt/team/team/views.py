@@ -87,3 +87,20 @@ class TeamApplyView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, *args, **kwargs):
+        id = kwargs.get("team_id")
+        apply = TeamApply.objects.get(id=id)
+
+        team = Team.objects.get(id=apply.team_id)
+
+        if team.leader != request.user.id:
+            return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.serializer_class(apply, data={"is_approved": True}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
