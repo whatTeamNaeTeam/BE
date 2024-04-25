@@ -1,6 +1,5 @@
-from django.urls import path
-from .views import CreateTeamView
+from django.urls import path, include
 
 urlpatterns = [
-    path("team/create", CreateTeamView.as_view()),
+    path("team/", include("team.team.urls")),
 ]

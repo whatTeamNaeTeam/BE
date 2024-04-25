@@ -21,7 +21,12 @@ class Team(TimestampedModel):
 class TeamApply(TimestampedModel):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    bio = models.CharField(max_length=200, default="열심히 하겠습니다!")
+    tech = models.CharField(max_length=15, default="BE")
     is_approved = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "team", "tech"], name="teamapply_unique")]
 
 
 class TeamTech(TimestampedModel):
