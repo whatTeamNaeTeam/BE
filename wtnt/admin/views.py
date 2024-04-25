@@ -78,7 +78,7 @@ class UserDeleteView(APIView):
 
 
 class TeamManageGetListView(APIView):
-    permission_calsses = [IsAdminUser]
+    permission_classes = [IsAdminUser]
     serializer_class = ApproveTeamSerializer
 
     def get(self, request):
@@ -89,7 +89,7 @@ class TeamManageGetListView(APIView):
 
 
 class TeamManageUpdateView(APIView):
-    permission_calsses = [IsAdminUser]
+    permission_classes = [IsAdminUser]
     serializer_class = ApproveTeamSerializer
 
     def patch(self, request, *args, **kwargs):

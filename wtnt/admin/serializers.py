@@ -11,7 +11,7 @@ class ApproveUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["name", "student_num", "id", "is_approved"]
+        fields = ["name", "student_num", "id", "created_at", "is_approved"]
 
 
 class ApproveTeamSerializer(serializers.ModelSerializer):
@@ -19,4 +19,4 @@ class ApproveTeamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ["id", "name", "is_approved"]
+        fields = ["id", "name", "created_at", "is_approved"]
