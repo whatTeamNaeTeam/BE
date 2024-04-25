@@ -25,6 +25,9 @@ class TeamApply(TimestampedModel):
     tech = models.CharField(max_length=15, default="BE")
     is_approved = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "team", "tech"], name="teamapply_unique")]
+
 
 class TeamTech(TimestampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
