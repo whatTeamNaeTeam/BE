@@ -41,4 +41,10 @@ class TeamCreateSerializerHelper:
         return {"team": team_data, "category": tech_data, "urls": None}
 
 
+class ApplySerializerHelper:
+    def make_data(self, user_id, team_id, bio):
+        return {"team_id": team_id, "user_id": user_id, "bio": bio, "is_approved": False}
+
+
+applySerializerHelper = ApplySerializerHelper()
 createSerializerHelper = TeamCreateSerializerHelper()
