@@ -11,7 +11,7 @@ from team.serializers import (
     TeamApplySerializer,
 )
 from team.utils import createSerializerHelper, applySerializerHelper
-from team.models import TeamApply, Team
+from team.models import TeamApply, Team, TeamTech
 
 # Create your views here.
 
@@ -75,10 +75,15 @@ class TeamApplyView(APIView):
 
     def post(self, request, *args, **kwargs):
         bio = request.data.get("bio", None)
+        tech = request.data.get("subCategory")
         user_id = request.user.id
         team_id = kwargs.get("team_id")
 
-        apply_data = applySerializerHelper.make_data(user_id, team_id, bio)
+        teamTech = TeamTech.objects.get(team_id=team_id, tech=tech)
+        if teamTech.need_num <= teamTech.current_num:
+            return Response({"error": "마감된 분야입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        apply_data = applySerializerHelper.make_data(user_id, team_id, bio, tech)
         serializer = self.serializer_class(data=apply_data)
 
         if serializer.is_valid():
@@ -93,13 +98,16 @@ class TeamApplyView(APIView):
         apply = TeamApply.objects.get(id=id)
 
         team = Team.objects.get(id=apply.team_id)
+        team_tech = TeamTech.objects.get(team_id=team.id, tech=apply.tech)
 
         if team.leader != request.user.id:
             return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.serializer_class(apply, data={"is_approved": True}, partial=True)
-        if serializer.is_valid():
+        if serializer.is_valid() and team_tech.current_num < team_tech.need_num:
             serializer.save()
+            team_tech.current_num += 1
+            team_tech.save()
 
             return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 

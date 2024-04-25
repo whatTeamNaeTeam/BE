@@ -42,4 +42,4 @@ class TeamApplySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeamApply
-        fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio"]
+        fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
