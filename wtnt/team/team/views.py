@@ -4,8 +4,13 @@ from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 
 from core.permissions import IsApprovedUser
-from team.serializers import TeamCreateSerializer, TeamUrlCreateSerializer, TeamTechCreateSerializer
-from team.utils import createSerializerHelper
+from team.serializers import (
+    TeamCreateSerializer,
+    TeamUrlCreateSerializer,
+    TeamTechCreateSerializer,
+    TeamApplySerializer,
+)
+from team.utils import createSerializerHelper, applySerializerHelper
 
 # Create your views here.
 
@@ -47,3 +52,23 @@ class TeamView(APIView):
                 return Response(response, status=status.HTTP_201_CREATED)
 
         return Response({"message": "Error"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeamApplyView(APIView):
+    permission_classes = [IsApprovedUser]
+    serializer_class = TeamApplySerializer
+
+    def post(self, request, *args, **kwargs):
+        bio = request.data.get("bio", None)
+        user_id = request.user.id
+        team_id = kwargs.get("team_id")
+
+        apply_data = applySerializerHelper.make_data(user_id, team_id, bio)
+        serializer = self.serializer_class(data=apply_data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
