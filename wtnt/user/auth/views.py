@@ -75,13 +75,13 @@ class GithubOAuthCallBackView(APIView):
 
     def get(self, request: Request):
         if code := request.GET.get("code"):
-            response = self.send_code_to_github_login_view(code)
-            if response.status_code == 200:
-                return Response(response.json(), status=status.HTTP_200_OK)
-            return Response(
-                {"error": "Failed to process with GithubLoginView"},
-                status=response.status_code,
-            )
+            # response = self.send_code_to_github_login_view(code)
+            # if response.status_code == 200:
+            return Response(code, status=status.HTTP_200_OK)
+        # return Response(
+        # {"error": "Failed to process with GithubLoginView"},
+        # status=response.status_code,
+        # )
 
     def send_code_to_github_login_view(self, code: str):
         url = "http://localhost:8000/api/auth/github/login"
@@ -96,15 +96,15 @@ class FinishGithubLoginView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        request_data = request.data
         extra_data = SocialAccount.objects.get(user_id=request.user.id).extra_data
 
         user = User.objects.get(id=request.user.id)
-        user.student_num = str(request_data.get("student_num"))
-        user.name = request_data.get("name")
+        user.student_num = str(request.data.get("student_num"))
+        user.name = request.data.get("name")
         user.social_id = extra_data.get("id")
         user.email = extra_data.get("login") + "@github.com"
         user.image = extra_data.get("avatar_url")
+        user.position = request.data.get("position")
 
         user.save()
 
