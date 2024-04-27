@@ -11,10 +11,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     email = models.EmailField(unique=True)
     social_id = models.IntegerField(null=True)
     name = models.CharField(max_length=5)
-    university = models.CharField(max_length=8, null=True)
-    club = models.CharField(max_length=10, null=True)
+    university = models.CharField(max_length=8, default="부경대학교")
+    club = models.CharField(max_length=10, default="WAP")
     student_num = models.CharField(max_length=20, null=True)
-    tech = models.CharField(max_length=200, null=True)
+    position = models.CharField(max_length=15, null=True)
+    explain = models.CharField(max_length=500, default="열심히 하겠습니다!")
     image = models.CharField(max_length=200, null=True)
     is_approved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -36,5 +37,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
 
 class UserUrls(TimestampedModel):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    url = models.CharField(max_length=50)
-    category = models.CharField(max_length=10)
+    url = models.CharField(max_length=200)
+
+
+class UserTech(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    tech = models.CharField(max_length=15)
