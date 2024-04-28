@@ -14,3 +14,9 @@ class UserSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = BaseUserSerializer.Meta.fields + ["image"]
+
+
+class UserProfileSerializer(UserSerializer):
+    class Meta:
+        model = User
+        fields = UserSerializer.Meta.fields + ["is_approved", "is_staff", "position", "explain"]
