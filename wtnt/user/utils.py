@@ -7,5 +7,13 @@ class ProfileSerializerHelper:
             "is_owner": True if owner_id == profile.data["id"] else False,
         }
 
+    def make_tech_data(self, tech):
+        data = tech.data["tech"].split(",")
+        return [{"name": name} for name in data]
+
+    def make_url_data(self, url):
+        data = url.data["url"].split(",")
+        return [{"url": url} for url in data]
+
 
 profileSerializerHelper = ProfileSerializerHelper()
