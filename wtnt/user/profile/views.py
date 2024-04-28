@@ -40,7 +40,7 @@ class UserProfileView(APIView):
 
 class UserTechView(APIView):
     permission_classes = [AllowAny]
-    serializer_classes = UserTechSerializer
+    serializer_class = UserTechSerializer
 
     def post(self, request, *args, **kwargs):
         owner_id = kwargs.get("user_id")
@@ -57,11 +57,11 @@ class UserTechView(APIView):
 
         else:
             data = {"user_id": owner_id, "tech": tech}
-            serializer = self.serializer_classes(data=data)
+            serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+            return Response({"urls": profileSerializerHelper.make_tech_data(tech)}, status=status.HTTP_202_ACCEPTED)
 
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -89,7 +89,7 @@ class UserUrlView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+            return Response({"urls": profileSerializerHelper.make_url_data(url)}, status=status.HTTP_202_ACCEPTED)
 
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
