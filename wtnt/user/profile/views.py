@@ -36,3 +36,60 @@ class UserProfileView(APIView):
             )
 
         return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserTechView(APIView):
+    permission_classes = [AllowAny]
+    serializer_classes = UserTechSerializer
+
+    def post(self, request, *args, **kwargs):
+        owner_id = kwargs.get("user_id")
+        user_id = request.user.id
+        tech = request.data.get("tech")
+
+        if owner_id != user_id:
+            return Response({"error": "It's not an owner"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_tech = UserTech.objects.filter(user_id=user_id).first()
+
+        if user_tech:
+            serializer = self.serializer_class(user_tech, data={"tech": tech}, partial=True)
+
+        else:
+            data = {"user_id": owner_id, "tech": tech}
+            serializer = self.serializer_classes(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserUrlView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserUrlSerializer
+
+    def post(self, request, *args, **kwargs):
+        owner_id = kwargs.get("user_id")
+        user_id = request.user.id
+        url = request.data.get("url")
+
+        if owner_id != user_id:
+            return Response({"error": "It's not an owner"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_url = UserUrls.objects.filter(user_id=user_id).first()
+
+        if user_url:
+            serializer = self.serializer_class(user_url, data={"url": url}, partial=True)
+        else:
+            data = {"user_id": owner_id, "url": url}
+            serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+
+        else:
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
