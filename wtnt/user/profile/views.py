@@ -61,7 +61,7 @@ class UserTechView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"urls": profileSerializerHelper.make_tech_data(tech)}, status=status.HTTP_202_ACCEPTED)
+            return Response({"tech": profileSerializerHelper.make_tech_data(tech)}, status=status.HTTP_202_ACCEPTED)
 
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
