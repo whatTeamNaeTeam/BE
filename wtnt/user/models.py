@@ -35,11 +35,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
         return True
 
 
-class UserUrls(TimestampedModel):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    url = models.CharField(max_length=200)
+class UserUrls(models.Model):
+    user = models.OneToOneField(CustomUser, primary_key=True, on_delete=models.CASCADE)
+    url = models.BinaryField()
 
 
 class UserTech(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    tech = models.CharField(max_length=15)
+    user = models.OneToOneField(CustomUser, primary_key=True, on_delete=models.CASCADE)
+    tech = models.BinaryField()

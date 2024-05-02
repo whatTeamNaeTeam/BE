@@ -1,18 +1,11 @@
 from rest_framework import serializers
 from .models import Team, TeamURL, TeamTech, TeamApply
-
-
-class MyBinaryField(serializers.Field):
-    def to_representation(self, value):
-        return value.decode("utf-8")
-
-    def to_internal_value(self, data):
-        return data.encode("utf-8")
+from core.fields import BinaryField
 
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     leader_id = serializers.IntegerField()
-    explain = MyBinaryField()
+    explain = BinaryField()
 
     class Meta:
         model = Team
