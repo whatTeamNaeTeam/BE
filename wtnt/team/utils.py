@@ -38,7 +38,7 @@ class TeamCreateSerializerHelper:
         return {"team": team_data, "urls": url_data, "category": tech_data}
 
     def make_response(self, team_data, tech_data):
-        return {"team": team_data, "category": tech_data, "urls": None}
+        return {"team": team_data, "category": tech_data, "urls": []}
 
 
 class ApplySerializerHelper:
