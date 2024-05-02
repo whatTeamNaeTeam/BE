@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 
 from core.permissions import IsApprovedUser
@@ -11,7 +12,7 @@ from team.serializers import (
     TeamApplySerializer,
 )
 from team.utils import createSerializerHelper, applySerializerHelper
-from team.models import TeamApply, Team, TeamTech
+from team.models import TeamApply, Team, TeamTech, TeamURL
 
 # Create your views here.
 
@@ -36,12 +37,12 @@ class TeamView(APIView):
             techSerializer = TeamTechCreateSerializer(data=team_techs, many=True)
 
             if techSerializer.is_valid():
+                techSerializer.save()
                 if request.data.getlist("urls", None):
                     team_urls = createSerializerHelper.make_urls_data(team_id, request.data.getlist("urls"))
                     urlSerializer = TeamUrlCreateSerializer(data=team_urls, many=True)
 
                     if urlSerializer.is_valid():
-                        techSerializer.save()
                         urlSerializer.save()
 
                         response = createSerializerHelper.make_full_response(
@@ -132,3 +133,33 @@ class TeamApplyView(APIView):
 
         except TeamApply.DoesNotExist:
             return Response({"error": "Apply Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class TeamDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        team_id = kwargs.get("team_id")
+        try:
+            team = Team.objects.get(id=team_id)
+            teamSerializer = TeamCreateSerializer(team)
+
+            team_tech = TeamTech.objects.filter(team_id=team_id)
+            team_url = TeamURL.objects.filter(team_id=team_id)
+
+            techSerializer = TeamTechCreateSerializer(team_tech, many=True)
+            urlSerializer = TeamUrlCreateSerializer(team_url, many=True)
+            is_leader = True if request.user.id == team.leader.id else False
+
+            return Response(
+                {
+                    "team": teamSerializer.data,
+                    "tech": techSerializer.data,
+                    "url": urlSerializer.data,
+                    "is_leader": is_leader,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Team.DoesNotExist:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
