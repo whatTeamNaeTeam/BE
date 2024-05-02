@@ -37,6 +37,46 @@ class UserProfileView(APIView):
 
         return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
+    def patch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            owner_id = request.user.id
+        else:
+            owner_id = 0
+        user_id = kwargs.get("user_id")
+
+        if user_id != owner_id:
+            return Response({"error": "It's not an owner."}, status=status.HTTP_403_FORBIDDEN)
+
+        user = User.objects.get(id=user_id)
+        explain = request.data.get("explain")
+        serializer = UserProfileSerializer(user, data={"explain": explain}, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({"explain": explain}, status=status.HTTP_202_ACCEPTED)
+
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            owner_id = request.user.id
+        else:
+            owner_id = 0
+        user_id = kwargs.get("user_id")
+
+        if user_id != owner_id:
+            return Response({"error": "It's not an owner."}, status=status.HTTP_403_FORBIDDEN)
+
+        user = User.objects.get(id=user_id)
+        position = request.data.get("position")
+        serializer = UserProfileSerializer(user, data={"position": position}, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserTechView(APIView):
     permission_classes = [AllowAny]
