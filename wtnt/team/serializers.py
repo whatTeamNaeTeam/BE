@@ -1,23 +1,16 @@
 from rest_framework import serializers
-from .models import Team, TeamURL, TeamTech, TeamApply
+from .models import Team, TeamTech, TeamApply
 from core.fields import BinaryField
 
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     leader_id = serializers.IntegerField()
     explain = BinaryField()
+    url = BinaryField()
 
     class Meta:
         model = Team
-        fields = ["id", "leader_id", "name", "explain", "genre", "like", "version", "image"]
-
-
-class TeamUrlCreateSerializer(serializers.ModelSerializer):
-    team_id = serializers.IntegerField()
-
-    class Meta:
-        model = TeamURL
-        fields = ["id", "team_id", "url"]
+        fields = ["id", "leader_id", "name", "explain", "genre", "like", "version", "image", "url"]
 
 
 class TeamTechCreateSerializer(serializers.ModelSerializer):

@@ -7,12 +7,11 @@ from django.contrib.auth import get_user_model
 from core.permissions import IsApprovedUser
 from team.serializers import (
     TeamCreateSerializer,
-    TeamUrlCreateSerializer,
     TeamTechCreateSerializer,
     TeamApplySerializer,
 )
 from team.utils import createSerializerHelper, applySerializerHelper
-from team.models import TeamApply, Team, TeamTech, TeamURL
+from team.models import TeamApply, Team, TeamTech
 
 # Create your views here.
 
@@ -38,22 +37,13 @@ class TeamView(APIView):
 
             if techSerializer.is_valid():
                 techSerializer.save()
-                if request.data.getlist("urls", None):
-                    team_urls = createSerializerHelper.make_urls_data(team_id, request.data.getlist("urls"))
-                    urlSerializer = TeamUrlCreateSerializer(data=team_urls, many=True)
-
-                    if urlSerializer.is_valid():
-                        urlSerializer.save()
-
-                        response = createSerializerHelper.make_full_response(
-                            createSerializer.data, urlSerializer.data, techSerializer.data
-                        )
-                else:
-                    response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
+                response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
 
                 return Response(response, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": techSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"message": "Error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TeamApplyView(APIView):
@@ -145,21 +135,14 @@ class TeamDetailView(APIView):
             teamSerializer = TeamCreateSerializer(team)
 
             team_tech = TeamTech.objects.filter(team_id=team_id)
-            team_url = TeamURL.objects.filter(team_id=team_id)
 
             techSerializer = TeamTechCreateSerializer(team_tech, many=True)
-            urlSerializer = TeamUrlCreateSerializer(team_url, many=True)
             is_leader = True if request.user.id == team.leader.id else False
 
-            return Response(
-                {
-                    "team": teamSerializer.data,
-                    "tech": techSerializer.data,
-                    "url": urlSerializer.data,
-                    "is_leader": is_leader,
-                },
-                status=status.HTTP_200_OK,
-            )
+            response = createSerializerHelper.make_response(teamSerializer.data, techSerializer.data)
+            response["is_leader"] = is_leader
+
+            return Response(response, status=status.HTTP_200_OK)
 
         except Team.DoesNotExist:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
