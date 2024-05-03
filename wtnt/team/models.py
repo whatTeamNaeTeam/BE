@@ -15,7 +15,9 @@ class Team(TimestampedModel):
     version = models.IntegerField(default=0)
     view = models.IntegerField(default=0)
     image = models.CharField(max_length=200, null=True)
+    url = models.BinaryField(null=True)
     is_approved = models.BooleanField(default=False)
+    is_accomplished = models.BooleanField(default=False)
 
 
 class TeamApply(TimestampedModel):
@@ -34,11 +36,6 @@ class TeamTech(TimestampedModel):
     need_num = models.IntegerField()
     current_num = models.IntegerField(default=0)
     tech = models.CharField(max_length=15)
-
-
-class TeamURL(TimestampedModel):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    url = models.CharField(max_length=200)
 
 
 class Likes(TimestampedModel):
