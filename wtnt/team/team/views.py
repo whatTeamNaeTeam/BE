@@ -38,6 +38,7 @@ class TeamView(APIView):
             if techSerializer.is_valid():
                 techSerializer.save()
                 response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
+                response["team"]["leader_name"] = request.user.name
 
                 return Response(response, status=status.HTTP_201_CREATED)
             else:
@@ -140,6 +141,7 @@ class TeamDetailView(APIView):
             is_leader = True if request.user.id == team.leader.id else False
 
             response = createSerializerHelper.make_response(teamSerializer.data, techSerializer.data)
+            response["team"]["leader_name"] = team.leader.name
             response["is_leader"] = is_leader
 
             return Response(response, status=status.HTTP_200_OK)
