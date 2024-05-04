@@ -32,7 +32,7 @@ class TeamApply(TimestampedModel):
 
 
 class TeamTech(TimestampedModel):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, related_name="category", on_delete=models.CASCADE)
     need_num = models.IntegerField()
     current_num = models.IntegerField(default=0)
     tech = models.CharField(max_length=15)
