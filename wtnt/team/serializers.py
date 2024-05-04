@@ -5,12 +5,16 @@ from core.fields import BinaryField
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     leader_id = serializers.IntegerField()
+    leader_name = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
     url = BinaryField()
 
     class Meta:
         model = Team
-        fields = ["id", "leader_id", "name", "explain", "genre", "like", "version", "image", "url"]
+        fields = ["id", "leader_id", "leader_name", "name", "explain", "genre", "like", "version", "image", "url"]
+
+    def get_leader_name(self, obj):
+        return obj.leader.name
 
 
 class TeamTechCreateSerializer(serializers.ModelSerializer):
