@@ -1,23 +1,20 @@
 from rest_framework import serializers
-from .models import Team, TeamURL, TeamTech, TeamApply
+from .models import Team, TeamTech, TeamApply
 from core.fields import BinaryField
 
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     leader_id = serializers.IntegerField()
+    leader_name = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
+    url = BinaryField()
 
     class Meta:
         model = Team
-        fields = ["id", "leader_id", "name", "explain", "genre", "like", "version", "image"]
+        fields = ["id", "leader_id", "leader_name", "name", "explain", "genre", "like", "version", "image", "url"]
 
-
-class TeamUrlCreateSerializer(serializers.ModelSerializer):
-    team_id = serializers.IntegerField()
-
-    class Meta:
-        model = TeamURL
-        fields = ["id", "team_id", "url"]
+    def get_leader_name(self, obj):
+        return obj.leader.name
 
 
 class TeamTechCreateSerializer(serializers.ModelSerializer):
@@ -36,3 +33,19 @@ class TeamApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamApply
         fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
+
+
+class TeamListSerializer(serializers.ModelSerializer):
+    category = TeamTechCreateSerializer(many=True, read_only=True)
+    leader_name = serializers.SerializerMethodField()
+    leader_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "image", "category", "leader_id", "leader_name", "like", "version", "view", "genre"]
+
+    def get_leader_name(self, obj):
+        return obj.leader.name
+
+    def get_leader_id(self, obj):
+        return obj.leader.id

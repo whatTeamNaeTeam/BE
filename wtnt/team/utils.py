@@ -15,30 +15,31 @@ class TeamCreateSerializerHelper:
 
         return f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{root}"
 
-    def make_data(self, leader, strs, url):
+    def make_data(self, leader, strs, image):
         _dict = {
             "name": strs.get("name"),
             "leader_id": leader,
             "explain": strs.get("explain"),
             "genre": strs.get("genre"),
-            "image": url,
+            "image": image,
+            "url": strs.get("urls", "No"),
         }
 
         return _dict
-
-    def make_urls_data(self, team_id, urls):
-        return [{"team_id": team_id, "url": url} for url in urls]
 
     def make_techs_data(self, team_id, categories, counts):
         return [
             {"team_id": team_id, "tech": category, "need_num": count} for category, count in zip(categories, counts)
         ]
 
-    def make_full_response(self, team_data, url_data, tech_data):
-        return {"team": team_data, "urls": url_data, "category": tech_data}
-
     def make_response(self, team_data, tech_data):
-        return {"team": team_data, "category": tech_data, "urls": None}
+        url_data = team_data.pop("url")
+        if url_data == "No":
+            url_data = []
+        else:
+            url_data = url_data.split(",")
+
+        return {"team": team_data, "category": tech_data, "urls": url_data}
 
 
 class ApplySerializerHelper:
