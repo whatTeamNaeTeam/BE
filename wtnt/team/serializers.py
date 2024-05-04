@@ -29,3 +29,11 @@ class TeamApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamApply
         fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
+
+
+class TeamListSerializer(serializers.ModelSerializer):
+    category = TeamTechCreateSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "image", "category", "leader", "like", "version", "view"]
