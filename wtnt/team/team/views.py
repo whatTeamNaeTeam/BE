@@ -1,11 +1,12 @@
 from rest_framework import status
+from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 
 from core.permissions import IsApprovedUser
-from team.serializers import TeamCreateSerializer, TeamTechCreateSerializer
+from team.serializers import TeamCreateSerializer, TeamTechCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
 from team.models import Team, TeamTech
 
@@ -97,4 +98,37 @@ class TeamDetailView(APIView):
                 return Response({"name": name, "explain": explain}, status=status.HTTP_202_ACCEPTED)
 
         except Team.DoesNotExist:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class TeamPagination(CursorPagination):
+    page_size = 2
+    ordering = "created_at"
+
+
+class InProgressTeamView(APIView, TeamPagination):
+    permission_classes = [AllowAny]
+    serializer_class = TeamListSerializer
+
+    def get(self, request):
+        queryset = Team.objects.filter(is_accomplished=False).all()
+        if queryset:
+            paginated = self.paginate_queryset(queryset, request, view=self)
+            serializer = self.serializer_class(paginated, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AccomplishedTeamView(APIView, TeamPagination):
+    permission_classes = [AllowAny]
+    serializer_class = TeamListSerializer
+
+    def get(self, request):
+        queryset = Team.objects.filter(is_accomplished=True).all()
+        if queryset:
+            paginated = self.paginate_queryset(queryset, request, view=self)
+            serializer = self.serializer_class(paginated, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
