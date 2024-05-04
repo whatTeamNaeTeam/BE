@@ -148,3 +148,36 @@ class TeamDetailView(APIView):
 
         except Team.DoesNotExist:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, *args, **kwargs):
+        team_id = kwargs.get("team_id")
+        try:
+            team = Team.objects.get(id=team_id)
+            if team.leader.id != request.user.id:
+                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+
+            url = request.data.get("urls")
+            serializer = TeamCreateSerializer(team, {"url": url}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"urls": url.split(",")}, status=status.HTTP_202_ACCEPTED)
+
+        except Team.DoesNotExist:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, *args, **kwargs):
+        team_id = kwargs.get("team_id")
+        try:
+            team = Team.objects.get(id=team_id)
+            if team.leader.id != request.user.id:
+                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+
+            name = request.data.get("name")
+            explain = request.data.get("explain")
+            serializer = TeamCreateSerializer(team, data={"name": name, "explain": explain}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"name": name, "explain": explain}, status=status.HTTP_202_ACCEPTED)
+
+        except Team.DoesNotExist:
+            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
