@@ -33,7 +33,15 @@ class TeamApplySerializer(serializers.ModelSerializer):
 
 class TeamListSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
+    leader_name = serializers.SerializerMethodField()
+    leader_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id", "name", "image", "category", "leader", "like", "version", "view"]
+        fields = ["id", "name", "image", "category", "leader_id", "leader_name", "like", "version", "view"]
+
+    def get_leader_name(self, obj):
+        return obj.leader.name
+
+    def get_leader_id(self, obj):
+        return obj.leader.id
