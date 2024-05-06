@@ -51,11 +51,11 @@ class UserManageUpdateView(APIView):
             return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserListPagenation(PageNumberPagination):
+class ListPagenationSize10(PageNumberPagination):
     page_size = 10
 
 
-class UserGetListView(APIView, UserListPagenation):
+class UserGetListView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveUserSerializer
 
@@ -121,15 +121,16 @@ class TeamManageUpdateView(APIView):
             return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class TeamDeleteGetListView(APIView):
+class TeamGetListView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveTeamSerializer
 
     def get(self, request):
-        queryset = Team.objects.filter(is_approved=True)
-        serializer = self.serializer_class(queryset, many=True)
+        queryset = Team.objects.filter(is_approved=True).order_by("id")
+        paginated = self.paginate_queryset(queryset, request, view=self)
+        serializer = self.serializer_class(paginated, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
 
 
 class TeamDeleteView(APIView):
