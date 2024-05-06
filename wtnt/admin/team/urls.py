@@ -7,8 +7,8 @@ from .views import (
 )
 
 urlpatterns = [
-    path("admin/team/manage", TeamManageGetListView.as_view()),
-    path("admin/team/manage/<int:team_id>", TeamManageUpdateView.as_view()),
-    path("admin/team/list", TeamGetListView.as_view()),
-    path("admin/team/list/<int:team_id>", TeamDeleteView.as_view()),
+    path("manage", TeamManageGetListView.as_view()),
+    path("manage/<int:team_id>", TeamManageUpdateView.as_view()),
+    path("list", TeamGetListView.as_view()),
+    path("list/<int:team_id>", TeamDeleteView.as_view()),
 ]
