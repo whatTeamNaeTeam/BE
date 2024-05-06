@@ -7,7 +7,7 @@ from .views import (
     TeamManageGetListView,
     TeamManageUpdateView,
     TeamDeleteView,
-    TeamDeleteGetListView,
+    TeamGetListView,
 )
 
 urlpatterns = [
@@ -17,6 +17,6 @@ urlpatterns = [
     path("admin/user/list/<int:user_id>", UserDeleteView.as_view()),
     path("admin/team/manage", TeamManageGetListView.as_view()),
     path("admin/team/manage/<int:team_id>", TeamManageUpdateView.as_view()),
-    path("admin/team/delete", TeamDeleteGetListView.as_view()),
-    path("admin/team/delete/<int:team_id>", TeamDeleteView.as_view()),
+    path("admin/team/list", TeamGetListView.as_view()),
+    path("admin/team/list/<int:team_id>", TeamDeleteView.as_view()),
 ]
