@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
@@ -50,15 +51,20 @@ class UserManageUpdateView(APIView):
             return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserDeleteGetListView(APIView):
+class UserListPagenation(PageNumberPagination):
+    page_size = 10
+
+
+class UserDeleteGetListView(APIView, UserListPagenation):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveUserSerializer
 
     def get(self, request):
-        queryset = User.objects.filter(is_approved=True, is_superuser=False)
-        serializer = self.serializer_class(queryset, many=True)
+        queryset = User.objects.filter(is_approved=True, is_superuser=False).order_by("student_num")
+        paginated = self.paginate_queryset(queryset, request, view=self)
+        serializer = self.serializer_class(paginated, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
 
 
 class UserDeleteView(APIView):
