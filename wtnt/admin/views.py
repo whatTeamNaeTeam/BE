@@ -55,7 +55,7 @@ class UserListPagenation(PageNumberPagination):
     page_size = 10
 
 
-class UserDeleteGetListView(APIView, UserListPagenation):
+class UserGetListView(APIView, UserListPagenation):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveUserSerializer
 
