@@ -11,7 +11,7 @@ from admin.serializers import ApproveTeamSerializer
 User = get_user_model()
 
 
-class TeamManageGetListView(APIView):
+class TeamManageView(APIView):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveTeamSerializer
 
@@ -21,26 +21,16 @@ class TeamManageGetListView(APIView):
 
         return Response(serialzer.data, status=status.HTTP_200_OK)
 
-
-class TeamManageUpdateView(APIView):
-    permission_classes = [IsAdminUser]
-    serializer_class = ApproveTeamSerializer
-
     def patch(self, request, *args, **kwargs):
-        team_id = kwargs.get("team_id")
-        team = Team.objects.get(id=team_id)
-
-        serializer = self.serializer_class(team, data={"is_approved": True}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        team_id = [int(id) for id in request.data.get("ids").split(",")]
+        team = Team.objects.filter(id__in=team_id)
+        team.update(is_approved=True)
+        return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, *args, **kwargs):
-        team_id = kwargs.get("team_id")
+        team_id = [int(id) for id in request.data.get("ids").split(",")]
         try:
-            team = Team.objects.get(id=team_id)
+            team = Team.objects.filter(id__in=team_id)
             team.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
@@ -49,7 +39,7 @@ class TeamManageUpdateView(APIView):
             return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class TeamGetListView(APIView, ListPagenationSize10):
+class TeamDeleteView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveTeamSerializer
 
@@ -60,15 +50,10 @@ class TeamGetListView(APIView, ListPagenationSize10):
 
         return self.get_paginated_response(serializer.data)
 
-
-class TeamDeleteView(APIView):
-    permission_classes = [IsAdminUser]
-    serializer_class = ApproveTeamSerializer
-
     def delete(self, request, *args, **kwargs):
-        team_id = kwargs.get("team_id")
+        team_id = [int(id) for id in request.data.get("ids").split(",")]
         try:
-            team = Team.objects.get(id=team_id)
+            team = Team.objects.filter(id__in=team_id)
             team.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
