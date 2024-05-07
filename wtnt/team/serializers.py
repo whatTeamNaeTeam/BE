@@ -3,7 +3,14 @@ from .models import Team, TeamTech, TeamApply
 from core.fields import BinaryField
 
 
+class TeamTechCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamTech
+        fields = ["id", "tech", "need_num", "current_num"]
+
+
 class TeamCreateSerializer(serializers.ModelSerializer):
+    category = TeamTechCreateSerializer(many=True)
     leader_id = serializers.IntegerField()
     leader_name = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
@@ -11,18 +18,31 @@ class TeamCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ["id", "leader_id", "leader_name", "name", "explain", "genre", "like", "version", "image", "url"]
+        fields = [
+            "id",
+            "leader_id",
+            "leader_name",
+            "name",
+            "explain",
+            "genre",
+            "like",
+            "version",
+            "image",
+            "url",
+            "category",
+        ]
 
     def get_leader_name(self, obj):
         return obj.leader.name
 
+    def create(self, validated_data):
+        techs = validated_data.pop("category")
+        team = Team.objects.create(**validated_data)
 
-class TeamTechCreateSerializer(serializers.ModelSerializer):
-    team_id = serializers.IntegerField()
+        for tech in techs:
+            TeamTech.objects.create(team=team, **tech)
 
-    class Meta:
-        model = TeamTech
-        fields = ["id", "team_id", "tech", "need_num", "current_num"]
+        return team
 
 
 class TeamApplySerializer(serializers.ModelSerializer):
