@@ -1,14 +1,14 @@
 from rest_framework import status
-from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 
-from core.permissions import IsApprovedUser
-from team.serializers import TeamCreateSerializer, TeamTechCreateSerializer, TeamListSerializer
+from core.permissions import IsApprovedUser, is_leader_perm
+from core.pagenations import TeamPagination
+from team.serializers import TeamCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
-from team.models import Team, TeamTech
+from team.models import Team
 
 # Create your views here.
 
@@ -20,25 +20,15 @@ class TeamView(APIView):
 
     def post(self, request, *args, **kwargs):
         url = createSerializerHelper.upload_s3(request.data.get("name"), request.FILES.get("image"))
-        team_data = createSerializerHelper.make_data(request.user.id, request.data, url)
+        team_data = createSerializerHelper.make_data(
+            request.user.id, request.data, url, request.data.getlist("subCategory"), request.data.getlist("memberCount")
+        )
         createSerializer = TeamCreateSerializer(data=team_data)
 
         if createSerializer.is_valid():
             createSerializer.save()
 
-            team_id = createSerializer.data.get("id")
-            team_techs = createSerializerHelper.make_techs_data(
-                team_id, request.data.getlist("subCategory"), request.data.getlist("memberCount")
-            )
-            techSerializer = TeamTechCreateSerializer(data=team_techs, many=True)
-
-            if techSerializer.is_valid():
-                techSerializer.save()
-                response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
-
-                return Response(response, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"error": techSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(createSerializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -51,14 +41,8 @@ class TeamDetailView(APIView):
         try:
             team = Team.objects.get(id=team_id)
             teamSerializer = TeamCreateSerializer(team)
-
-            team_tech = TeamTech.objects.filter(team_id=team_id)
-
-            techSerializer = TeamTechCreateSerializer(team_tech, many=True)
             is_leader = True if request.user.id == team.leader.id else False
-
-            response = createSerializerHelper.make_response(teamSerializer.data, techSerializer.data)
-            response["is_leader"] = is_leader
+            response = createSerializerHelper.make_response(teamSerializer.data, is_leader)
 
             return Response(response, status=status.HTTP_200_OK)
 
@@ -69,8 +53,7 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            if team.leader.id != request.user.id:
-                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+            is_leader_perm(request.user.id, team.leader.id)
 
             url = request.data.get("urls")
             serializer = TeamCreateSerializer(team, {"url": url}, partial=True)
@@ -85,8 +68,7 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            if team.leader.id != request.user.id:
-                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+            is_leader_perm(request.user.id, team.leader.id)
 
             name = request.data.get("name")
             explain = request.data.get("explain")
@@ -97,11 +79,6 @@ class TeamDetailView(APIView):
 
         except Team.DoesNotExist:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
-
-
-class TeamPagination(CursorPagination):
-    page_size = 2
-    ordering = "created_at"
 
 
 class InProgressTeamView(APIView, TeamPagination):
