@@ -20,25 +20,15 @@ class TeamView(APIView):
 
     def post(self, request, *args, **kwargs):
         url = createSerializerHelper.upload_s3(request.data.get("name"), request.FILES.get("image"))
-        team_data = createSerializerHelper.make_data(request.user.id, request.data, url)
+        team_data = createSerializerHelper.make_data(
+            request.user.id, request.data, url, request.data.getlist("subCategory"), request.data.getlist("memberCount")
+        )
         createSerializer = TeamCreateSerializer(data=team_data)
 
         if createSerializer.is_valid():
             createSerializer.save()
 
-            team_id = createSerializer.data.get("id")
-            team_techs = createSerializerHelper.make_techs_data(
-                team_id, request.data.getlist("subCategory"), request.data.getlist("memberCount")
-            )
-            techSerializer = TeamTechCreateSerializer(data=team_techs, many=True)
-
-            if techSerializer.is_valid():
-                techSerializer.save()
-                response = createSerializerHelper.make_response(createSerializer.data, techSerializer.data)
-
-                return Response(response, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"error": techSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(createSerializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
