@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from user.serializers import UserProfileSerializer, UserTechSerializer, UserUrlSerializer
 from user.models import UserTech, UserUrls
 from user.utils import profileSerializerHelper
+from core.exceptions import IsNotOwner
 
 User = get_user_model()
 
@@ -45,7 +46,7 @@ class UserProfileView(APIView):
         user_id = kwargs.get("user_id")
 
         if user_id != owner_id:
-            return Response({"error": "It's not an owner."}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotOwner()
 
         user = User.objects.get(id=user_id)
         explain = request.data.get("explain")
@@ -66,7 +67,7 @@ class UserProfileView(APIView):
         user_id = kwargs.get("user_id")
 
         if user_id != owner_id:
-            return Response({"error": "It's not an owner."}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotOwner()
 
         user = User.objects.get(id=user_id)
         position = request.data.get("position")
@@ -88,7 +89,7 @@ class UserTechView(APIView):
         tech = request.data.get("tech")
 
         if owner_id != user_id:
-            return Response({"error": "It's not an owner"}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotOwner()
 
         user_tech = UserTech.objects.filter(user_id=user_id).first()
 
@@ -117,7 +118,7 @@ class UserUrlView(APIView):
         url = request.data.get("url")
 
         if owner_id != user_id:
-            return Response({"error": "It's not an owner"}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotOwner()
 
         user_url = UserUrls.objects.filter(user_id=user_id).first()
 
