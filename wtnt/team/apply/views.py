@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from team.utils import applySerializerHelper
 from team.serializers import TeamApplySerializer
 from team.models import TeamApply, Team, TeamTech
+from core.exceptions import IsNotLeaderException
 from core.permissions import IsApprovedUser
 
 
@@ -18,7 +19,7 @@ class TeamApplyView(APIView):
         team = Team.objects.get(id=team_id)
 
         if team.leader != request.user.id:
-            return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotLeaderException()
 
         if queryset:
             serializer = self.serializer_class(queryset, many=True)
@@ -57,7 +58,7 @@ class TeamApplyView(APIView):
         team_tech = TeamTech.objects.get(team_id=team.id, tech=apply.tech)
 
         if team.leader != request.user.id:
-            return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+            raise IsNotLeaderException()
 
         serializer = self.serializer_class(apply, data={"is_approved": True}, partial=True)
         if serializer.is_valid() and team_tech.current_num < team_tech.need_num:
@@ -77,7 +78,7 @@ class TeamApplyView(APIView):
             team = Team.objects.get(id=apply.team_id)
 
             if team.leader != request.user.id:
-                return Response({"error": "No Permission"}, status=status.HTTP_403_FORBIDDEN)
+                raise IsNotLeaderException()
 
             apply.delete()
 
