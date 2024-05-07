@@ -31,14 +31,16 @@ class TeamCreateSerializerHelper:
     def make_tech_data(self, categories, counts):
         return [{"tech": category, "need_num": count} for category, count in zip(categories, counts)]
 
-    def make_response(self, team_data, tech_data):
+    def make_response(self, team_data, is_leader):
         url_data = team_data.pop("url")
         if url_data == "No":
             url_data = []
         else:
             url_data = url_data.split(",")
 
-        return {"team": team_data, "category": tech_data, "urls": url_data}
+        team_data["urls"] = url_data
+
+        return {"team": team_data, "is_leader": is_leader}
 
 
 class ApplySerializerHelper:
