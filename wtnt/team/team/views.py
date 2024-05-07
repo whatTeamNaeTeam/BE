@@ -1,11 +1,11 @@
 from rest_framework import status
-from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 
 from core.permissions import IsApprovedUser
+from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamTechCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
 from team.models import Team, TeamTech
@@ -97,11 +97,6 @@ class TeamDetailView(APIView):
 
         except Team.DoesNotExist:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
-
-
-class TeamPagination(CursorPagination):
-    page_size = 2
-    ordering = "created_at"
 
 
 class InProgressTeamView(APIView, TeamPagination):
