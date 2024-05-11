@@ -10,7 +10,7 @@ from admin.serializers import ApproveUserSerializer
 User = get_user_model()
 
 
-class UserManageGetListView(APIView):
+class UserManageView(APIView):
     serializer_class = ApproveUserSerializer
     permission_classes = [IsAdminUser]
 
@@ -22,26 +22,16 @@ class UserManageGetListView(APIView):
         else:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
-
-class UserManageUpdateView(APIView):
-    serializer_class = ApproveUserSerializer
-    permission_classes = [IsAdminUser]
-
     def patch(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
-        user = User.objects.get(id=user_id)
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
+        User.objects.filter(id__in=user_ids).update(is_approved=True)
 
-        serializer = ApproveUserSerializer(user, data={"is_approved": True}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.filter(id__in=user_ids)
             user.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
@@ -50,7 +40,7 @@ class UserManageUpdateView(APIView):
             return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserGetListView(APIView, ListPagenationSize10):
+class UserDeleteView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveUserSerializer
 
@@ -61,15 +51,11 @@ class UserGetListView(APIView, ListPagenationSize10):
 
         return self.get_paginated_response(serializer.data)
 
-
-class UserDeleteView(APIView):
-    serializer_class = ApproveUserSerializer
-    permission_classes = [IsAdminUser]
-
     def delete(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
+
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.filter(id__in=user_ids)
             user.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
