@@ -16,7 +16,8 @@ class ApproveUserSerializer(serializers.ModelSerializer):
 
 class ApproveTeamSerializer(serializers.ModelSerializer):
     is_approved = serializers.BooleanField(write_only=True)
+    genre = serializers.CharField(read_only=True)
 
     class Meta:
         model = Team
-        fields = ["id", "name", "created_at", "is_approved"]
+        fields = ["id", "name", "created_at", "is_approved", "genre"]
