@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from core.pagenations import ListPagenationSize10
 from admin.serializers import ApproveUserSerializer
@@ -10,7 +11,7 @@ from admin.serializers import ApproveUserSerializer
 User = get_user_model()
 
 
-class UserManageGetListView(APIView):
+class UserManageView(APIView):
     serializer_class = ApproveUserSerializer
     permission_classes = [IsAdminUser]
 
@@ -22,26 +23,16 @@ class UserManageGetListView(APIView):
         else:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
-
-class UserManageUpdateView(APIView):
-    serializer_class = ApproveUserSerializer
-    permission_classes = [IsAdminUser]
-
     def patch(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
-        user = User.objects.get(id=user_id)
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
+        User.objects.filter(id__in=user_ids).update(is_approved=True)
 
-        serializer = ApproveUserSerializer(user, data={"is_approved": True}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.filter(id__in=user_ids)
             user.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
@@ -50,7 +41,7 @@ class UserManageUpdateView(APIView):
             return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class UserGetListView(APIView, ListPagenationSize10):
+class UserDeleteView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
     serializer_class = ApproveUserSerializer
 
@@ -61,18 +52,43 @@ class UserGetListView(APIView, ListPagenationSize10):
 
         return self.get_paginated_response(serializer.data)
 
-
-class UserDeleteView(APIView):
-    serializer_class = ApproveUserSerializer
-    permission_classes = [IsAdminUser]
-
     def delete(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
+        user_ids = [int(id) for id in request.data.get("ids").split(",")]
+
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.filter(id__in=user_ids)
             user.delete()
 
             return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserSearchView(APIView, ListPagenationSize10):
+    permission_classes = [IsAdminUser]
+    serializer_class = ApproveUserSerializer
+
+    def get(self, request, *args, **kwargs):
+        keyword = request.query_params.get("keyword")
+        search_filter = request.query_params.get("filter")
+
+        try:
+            if search_filter == "name":
+                queryset = User.objects.filter(Q(name__icontains=keyword), is_approved=True).order_by("student_num")
+            elif search_filter == "student_num":
+                queryset = User.objects.filter(Q(student_num__icontains=keyword), is_approved=True).order_by(
+                    "student_num"
+                )
+            elif search_filter == "position":
+                queryset = User.objects.filter(Q(position__icontains=keyword), is_approved=True).order_by("student_num")
+            else:
+                return Response({"error": "No Filter"}, status=status.HTTP_400_BAD_REQUEST)
+
+            paginated = self.paginate_queryset(queryset, request, view=self)
+            serializer = self.serializer_class(paginated, many=True)
+
+            return self.get_paginated_response(serializer.data)
 
         except User.DoesNotExist:
             return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)

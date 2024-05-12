@@ -4,7 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 
-from core.permissions import IsApprovedUser, is_leader_perm
+from core.exceptions import IsNotLeaderException
+from core.permissions import IsApprovedUser
 from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
@@ -53,7 +54,8 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            is_leader_perm(request.user.id, team.leader.id)
+            if team.leader != request.user.id:
+                raise IsNotLeaderException()
 
             url = request.data.get("urls")
             serializer = TeamCreateSerializer(team, {"url": url}, partial=True)
@@ -68,7 +70,8 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            is_leader_perm(request.user.id, team.leader.id)
+            if team.leader != request.user.id:
+                raise IsNotLeaderException()
 
             name = request.data.get("name")
             explain = request.data.get("explain")
