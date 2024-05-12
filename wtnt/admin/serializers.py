@@ -8,10 +8,11 @@ User = get_user_model()
 
 class ApproveUserSerializer(serializers.ModelSerializer):
     is_approved = serializers.BooleanField(write_only=True)
+    position = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
-        fields = ["name", "student_num", "id", "created_at", "is_approved"]
+        fields = ["name", "student_num", "position", "id", "created_at", "is_approved"]
 
 
 class ApproveTeamSerializer(serializers.ModelSerializer):
