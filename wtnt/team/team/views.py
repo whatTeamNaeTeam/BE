@@ -54,7 +54,7 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            if request.user.id != team.leader.id:
+            if team.leader != request.user.id:
                 raise IsNotLeaderException()
 
             url = request.data.get("urls")
@@ -70,7 +70,7 @@ class TeamDetailView(APIView):
         team_id = kwargs.get("team_id")
         try:
             team = Team.objects.get(id=team_id)
-            if request.user.id != team.leader.id:
+            if team.leader != request.user.id:
                 raise IsNotLeaderException()
 
             name = request.data.get("name")
