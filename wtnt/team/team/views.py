@@ -42,8 +42,7 @@ class TeamDetailView(APIView):
         try:
             team = Team.objects.get(id=team_id)
             teamSerializer = TeamCreateSerializer(team)
-            is_leader = True if request.user.id == team.leader.id else False
-            response = createSerializerHelper.make_response(teamSerializer.data, is_leader)
+            response = createSerializerHelper.make_response(teamSerializer.data, request.user.id)
 
             return Response(response, status=status.HTTP_200_OK)
 

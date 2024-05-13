@@ -1,6 +1,8 @@
 import wtnt.settings as settings
 import boto3
 
+from team.models import Likes
+
 
 class TeamCreateSerializerHelper:
     def upload_s3(self, name, image):
@@ -31,7 +33,7 @@ class TeamCreateSerializerHelper:
     def make_tech_data(self, categories, counts):
         return [{"tech": category, "need_num": count} for category, count in zip(categories, counts)]
 
-    def make_response(self, team_data, is_leader):
+    def make_response(self, team_data, user_id):
         url_data = team_data.pop("url")
         if url_data == "No":
             url_data = []
@@ -39,8 +41,23 @@ class TeamCreateSerializerHelper:
             url_data = url_data.split(",")
 
         team_data["urls"] = url_data
+        team_id = team_data["id"]
 
-        return {"team": team_data, "is_leader": is_leader}
+        return {
+            "team": team_data,
+            "is_leader": self.is_leader(team_id, user_id),
+            "is_like": self.is_like(team_id, user_id),
+        }
+
+    def is_leader(self, team_id, user_id):
+        return True if user_id == team_id else False
+
+    def is_like(self, team_id, user_id):
+        try:
+            Likes.objects.get(team_id=team_id, user_id=user_id)
+            return True
+        except Likes.DoesNotExist:
+            return False
 
 
 class ApplySerializerHelper:
