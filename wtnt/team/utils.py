@@ -49,6 +49,19 @@ class TeamCreateSerializerHelper:
             "is_like": self.is_like(team_id, user_id),
         }
 
+    def make_responses(self, data, user_id):
+        to_return = []
+        for d in data:
+            if user_id:
+                stat = self.is_like(d["id"], user_id)
+            else:
+                stat = False
+
+            d["is_like"] = stat
+            to_return.append(d)
+
+        return to_return
+
     def is_leader(self, team_id, user_id):
         return True if user_id == team_id else False
 
