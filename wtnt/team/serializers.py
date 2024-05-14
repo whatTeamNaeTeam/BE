@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Team, TeamTech, TeamApply
+from .models import Team, TeamTech, TeamApply, Likes
 from core.fields import BinaryField
 
 
@@ -69,3 +69,12 @@ class TeamListSerializer(serializers.ModelSerializer):
 
     def get_leader_id(self, obj):
         return obj.leader.id
+
+
+class TeamLikeSerializer(serializers.ModelSerializer):
+    team_id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
+
+    class Meta:
+        model = Likes
+        fields = ["user_id", "team_id"]

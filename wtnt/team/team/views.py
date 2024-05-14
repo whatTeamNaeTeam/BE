@@ -42,8 +42,7 @@ class TeamDetailView(APIView):
         try:
             team = Team.objects.get(id=team_id)
             teamSerializer = TeamCreateSerializer(team)
-            is_leader = True if request.user.id == team.leader.id else False
-            response = createSerializerHelper.make_response(teamSerializer.data, is_leader)
+            response = createSerializerHelper.make_response(teamSerializer.data, request.user.id)
 
             return Response(response, status=status.HTTP_200_OK)
 
@@ -84,29 +83,23 @@ class TeamDetailView(APIView):
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class InProgressTeamView(APIView, TeamPagination):
+class TeamListView(APIView, TeamPagination):
     permission_classes = [AllowAny]
     serializer_class = TeamListSerializer
 
     def get(self, request):
-        queryset = Team.objects.filter(is_accomplished=False).all()
-        if queryset:
-            paginated = self.paginate_queryset(queryset, request, view=self)
-            serializer = self.serializer_class(paginated, many=True)
-            return self.get_paginated_response(serializer.data)
+        keyword = request.query_params.get("keyword")
+        if keyword == "inprogress":
+            queryset = Team.objects.filter(is_accomplished=False).all()
+        elif keyword == "accomplished":
+            queryset = Team.objects.filter(is_accomplished=True).all()
         else:
-            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Keyword Not Matched"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-class AccomplishedTeamView(APIView, TeamPagination):
-    permission_classes = [AllowAny]
-    serializer_class = TeamListSerializer
-
-    def get(self, request):
-        queryset = Team.objects.filter(is_accomplished=True).all()
         if queryset:
             paginated = self.paginate_queryset(queryset, request, view=self)
             serializer = self.serializer_class(paginated, many=True)
-            return self.get_paginated_response(serializer.data)
+            data = createSerializerHelper.make_responses(serializer.data, request.user.id)
+            return self.get_paginated_response(data)
         else:
             return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
