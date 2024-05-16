@@ -12,6 +12,7 @@ class TeamTechCreateSerializer(serializers.ModelSerializer):
 class TeamCreateSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True)
     leader_id = serializers.IntegerField()
+    view = serializers.CharField(read_only=True)
     leader_name = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
     url = BinaryField()
@@ -28,6 +29,7 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "like",
             "version",
             "image",
+            "view",
             "url",
             "category",
         ]
