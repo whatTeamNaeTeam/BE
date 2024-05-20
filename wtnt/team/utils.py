@@ -41,11 +41,12 @@ class TeamCreateSerializerHelper:
             url_data = url_data.split(",")
 
         team_data["urls"] = url_data
+        leader_id = team_data["leader_id"]
         team_id = team_data["id"]
 
         return {
             "team": team_data,
-            "is_leader": self.is_leader(team_id, user_id),
+            "is_leader": self.is_leader(leader_id, user_id),
             "is_like": self.is_like(team_id, user_id),
         }
 
@@ -62,8 +63,8 @@ class TeamCreateSerializerHelper:
 
         return to_return
 
-    def is_leader(self, team_id, user_id):
-        return True if user_id == team_id else False
+    def is_leader(self, leader_id, user_id):
+        return True if user_id == leader_id else False
 
     def is_like(self, team_id, user_id):
         try:

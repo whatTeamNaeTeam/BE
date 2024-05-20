@@ -24,12 +24,18 @@ class UserProfileView(APIView):
 
         user_queryset = User.objects.get(id=user_id)
         if user_queryset:
-            url_queryset = UserUrls.objects.get(user_id=user_id)
-            tech_queryset = UserTech.objects.get(user_id=user_id)
+            try:
+                url_queryset = UserUrls.objects.get(user_id=user_id)
+                url_serializer = url_serializer = UserUrlSerializer(url_queryset)
+            except UserUrls.DoesNotExist:
+                url_serializer = None
+            try:
+                tech_queryset = UserTech.objects.get(user_id=user_id)
+                tech_serializer = UserTechSerializer(tech_queryset)
+            except UserTech.DoesNotExist:
+                tech_serializer = None
 
             user_serializer = UserProfileSerializer(user_queryset)
-            url_serializer = UserUrlSerializer(url_queryset) if url_queryset else None
-            tech_serializer = UserTechSerializer(tech_queryset) if tech_queryset else None
 
             return Response(
                 profileSerializerHelper.make_data(owner_id, user_serializer, url_serializer, tech_serializer),
