@@ -19,6 +19,13 @@ class ProfileSerializerHelper:
         data = url.split(",")
         return [{"url": url} for url in data]
 
+    def classify_team(self, team_data, user_id):
+        leader_team = []
+        for team in team_data:
+            if team["leader_id"] == user_id:
+                leader_team.append(team["leader_id"])
+        return leader_team
+
 
 class SendEmailHelper:
     def make_random_code_for_register():
