@@ -10,7 +10,7 @@ from core.permissions import IsApprovedUser
 from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
-from team.models import Team
+from team.models import Team, TeamUser
 
 # Create your views here.
 client = get_redis_connection("default")
@@ -28,8 +28,11 @@ class TeamView(APIView):
         createSerializer = TeamCreateSerializer(data=team_data)
 
         if createSerializer.is_valid():
-            createSerializer.save()
-
+            team = createSerializer.save()
+            #
+            teamUser = TeamUser(team_id=team.id, user_id=request.user.id)
+            teamUser.save()
+            #
             return Response(createSerializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
