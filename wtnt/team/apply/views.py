@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from team.utils import applySerializerHelper
 from team.serializers import TeamApplySerializer
-from team.models import TeamApply, Team, TeamTech
+from team.models import TeamApply, Team, TeamTech, TeamUser
 from core.exceptions import IsNotLeaderException
 from core.permissions import IsApprovedUser
 
@@ -65,6 +65,9 @@ class TeamApplyView(APIView):
             serializer.save()
             team_tech.current_num += 1
             team_tech.save()
+
+            teamUser = TeamUser(team_id=team.id, user_id=request.user.id)
+            teamUser.save()
 
             return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
 
