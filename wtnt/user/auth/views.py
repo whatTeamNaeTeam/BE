@@ -117,7 +117,9 @@ class FinishGithubLoginView(APIView):
         user.save()
 
         serializer = self.serializer_class(user)
+
         client.delete(email)
+
         return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
 
@@ -147,20 +149,20 @@ class WtntTokenRefreshView(TokenRefreshView):
 class EmailVerifyView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request):
-        code = request.query_params.get("code")
-        email = request.queyr_params.get("email")
+    def patch(self, request, *args, **kwargs):
+        code = request.data.get("code")
+        email = request.data.get("email")
         answer = client.get(email)
         if code == answer:
             client.set(email, code)
             return Response({"code": code}, status=status.HTTP_200_OK)
         else:
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Code not Matched"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
         try:
             send_email.delay(email)
-            return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+            return Response({"detail": "Succes to send Email"}, status=status.HTTP_202_ACCEPTED)
         except Exception as e:
             return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)
