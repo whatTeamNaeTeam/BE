@@ -182,9 +182,9 @@ class UserManageActivityView(APIView):
         team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=team_ids)
         serializer = TeamListSerializer(team_data, many=True)
-        leader_team = profileSerializerHelper.classify_team(serializer.data, owner_id)
+        data = createSerializerHelper.make_responses(serializer.data, request.user.id)
 
-        return Response({"team": serializer.data, "leader": leader_team}, status=status.HTTP_200_OK)
+        return Response({"team": data}, status=status.HTTP_200_OK)
 
 
 class UserLikeTeamView(APIView):
