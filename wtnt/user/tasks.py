@@ -10,7 +10,7 @@ client = get_redis_connection("default")
 @app.task
 def send_email(email):
     code = sendEmailHelper.make_random_code_for_register()
-    client.set(email, code, ex=30)
+    client.set(email, code, ex=300)
     message = sendEmailHelper.get_template(code)
     subject = "%s" % "[WTNT] 이메일 인증 코드 안내"
     to = [email]
