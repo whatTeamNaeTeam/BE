@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from user.serializers import UserProfileSerializer, UserTechSerializer, UserUrlSerializer
 from team.serializers import TeamListSerializer
 from user.models import UserTech, UserUrls
-from team.models import TeamApply, Team, TeamUser
+from team.models import TeamApply, Team, TeamUser, Likes
 from user.utils import profileSerializerHelper
 from team.utils import createSerializerHelper
 from core.exceptions import IsNotOwner
@@ -185,3 +185,19 @@ class UserManageActivityView(APIView):
         leader_team = profileSerializerHelper.classify_team(serializer.data, owner_id)
 
         return Response({"team": serializer.data, "leader": leader_team}, status=status.HTTP_200_OK)
+
+
+class UserLikeTeamView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        owner_id = kwargs.get("user_id")
+        if owner_id != request.user.id:
+            raise IsNotOwner()
+
+        like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_data = Team.objects.filter(id__in=like_team_ids)
+        serializer = TeamListSerializer(team_data, many=True)
+        data = createSerializerHelper.make_responses(serializer.data, owner_id)
+
+        return Response({"team": data}, status=status.HTTP_200_OK)
