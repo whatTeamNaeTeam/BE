@@ -118,6 +118,8 @@ class FinishGithubLoginView(APIView):
 
         serializer = self.serializer_class(user)
 
+        client.delete(email)
+
         return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
 
