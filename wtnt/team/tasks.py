@@ -14,3 +14,4 @@ def delete_view_history():
         if keys:
             client.delete(*keys)
     print("--- 팀 조회 히스토리 삭제 완료 ---")
+    return "Success to delete team-view-history"
