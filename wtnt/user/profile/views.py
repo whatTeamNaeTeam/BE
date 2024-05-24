@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from user.serializers import UserProfileSerializer, UserTechSerializer, UserUrlSerializer
-from team.serializers import TeamListSerializer
+from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from user.models import UserTech, UserUrls
 from team.models import TeamApply, Team, TeamUser, Likes
 from user.utils import profileSerializerHelper
@@ -181,8 +181,8 @@ class UserManageActivityView(APIView):
 
         team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=team_ids)
-        serializer = TeamListSerializer(team_data, many=True)
-        data = createSerializerHelper.make_responses(serializer.data, request.user.id)
+        serializer = TeamManageActivitySerializer(team_data, many=True)
+        data = createSerializerHelper.make_responses(serializer.data, request.user.id, is_manage=True)
 
         return Response({"team": data}, status=status.HTTP_200_OK)
 
