@@ -80,3 +80,18 @@ class TeamLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Likes
         fields = ["user_id", "team_id"]
+
+
+class TeamManageActivitySerializer(serializers.ModelSerializer):
+    leader_id = serializers.SerializerMethodField(read_only=True)
+    leader_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "leader_name", "leader_id"]
+
+    def get_leader_name(self, obj):
+        return obj.leader.name
+
+    def get_leader_id(self, obj):
+        return obj.leader.id
