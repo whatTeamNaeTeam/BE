@@ -5,9 +5,13 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from user.serializers import UserProfileSerializer, UserTechSerializer, UserUrlSerializer
+from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from user.models import UserTech, UserUrls
+from team.models import TeamApply, Team, TeamUser, Likes
 from user.utils import profileSerializerHelper
+from team.utils import createSerializerHelper
 from core.exceptions import IsNotOwner
+from core.permissions import IsApprovedUser
 
 User = get_user_model()
 
@@ -24,12 +28,18 @@ class UserProfileView(APIView):
 
         user_queryset = User.objects.get(id=user_id)
         if user_queryset:
-            url_queryset = UserUrls.objects.get(user_id=user_id)
-            tech_queryset = UserTech.objects.get(user_id=user_id)
+            try:
+                url_queryset = UserUrls.objects.get(user_id=user_id)
+                url_serializer = url_serializer = UserUrlSerializer(url_queryset)
+            except UserUrls.DoesNotExist:
+                url_serializer = None
+            try:
+                tech_queryset = UserTech.objects.get(user_id=user_id)
+                tech_serializer = UserTechSerializer(tech_queryset)
+            except UserTech.DoesNotExist:
+                tech_serializer = None
 
             user_serializer = UserProfileSerializer(user_queryset)
-            url_serializer = UserUrlSerializer(url_queryset) if url_queryset else None
-            tech_serializer = UserTechSerializer(tech_queryset) if tech_queryset else None
 
             return Response(
                 profileSerializerHelper.make_data(owner_id, user_serializer, url_serializer, tech_serializer),
@@ -134,3 +144,60 @@ class UserUrlView(APIView):
 
         else:
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserMyActivityView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        user_id = kwargs.get("user_id")
+        keyword = request.query_params.get("keyword")
+        if keyword == "apply":
+            team_ids = TeamApply.objects.filter(user_id=user_id, is_approved=False).values_list("team_id", flat=True)
+            team_data = Team.objects.filter(id__in=team_ids)
+        else:
+            team_ids = TeamUser.objects.filter(user_id=user_id).values_list("team_id", flat=True)
+            if keyword == "accomplished":
+                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+            elif keyword == "inprogress":
+                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+            else:
+                return Response({"error": "Wrong Keyword"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = TeamListSerializer(team_data, many=True)
+        data = createSerializerHelper.make_responses(serializer.data, request.user.id)
+        is_owner = True if user_id == request.user.id else False
+
+        return Response({"team": data, "is_owner": is_owner}, status=status.HTTP_200_OK)
+
+
+class UserManageActivityView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        owner_id = kwargs.get("user_id")
+        if owner_id != request.user.id:
+            raise IsNotOwner()
+
+        team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_data = Team.objects.filter(id__in=team_ids)
+        serializer = TeamManageActivitySerializer(team_data, many=True)
+        data = createSerializerHelper.make_responses(serializer.data, request.user.id, is_manage=True)
+
+        return Response({"team": data}, status=status.HTTP_200_OK)
+
+
+class UserLikeTeamView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        owner_id = kwargs.get("user_id")
+        if owner_id != request.user.id:
+            raise IsNotOwner()
+
+        like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_data = Team.objects.filter(id__in=like_team_ids)
+        serializer = TeamListSerializer(team_data, many=True)
+        data = createSerializerHelper.make_responses(serializer.data, owner_id)
+
+        return Response({"team": data}, status=status.HTTP_200_OK)

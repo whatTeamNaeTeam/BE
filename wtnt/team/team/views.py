@@ -3,16 +3,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
+from django_redis import get_redis_connection
 
 from core.exceptions import IsNotLeaderException
 from core.permissions import IsApprovedUser
 from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
-from team.models import Team
+from team.models import Team, TeamUser
 
 # Create your views here.
-
+client = get_redis_connection("default")
 User = get_user_model()
 
 
@@ -27,8 +28,11 @@ class TeamView(APIView):
         createSerializer = TeamCreateSerializer(data=team_data)
 
         if createSerializer.is_valid():
-            createSerializer.save()
-
+            team = createSerializer.save()
+            #
+            teamUser = TeamUser(team_id=team.id, user_id=request.user.id)
+            teamUser.save()
+            #
             return Response(createSerializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -39,8 +43,17 @@ class TeamDetailView(APIView):
 
     def get(self, request, *args, **kwargs):
         team_id = kwargs.get("team_id")
+
+        if not request.user.id:
+            user_id = 0
+        else:
+            user_id = request.user.id
         try:
+            redis_ans = client.sadd(f"views:{team_id}", f"{user_id}_{request.META.get('REMOTE_ADDR')}")
             team = Team.objects.get(id=team_id)
+            if redis_ans:
+                team.view += 1
+                team.save()
             teamSerializer = TeamCreateSerializer(team)
             response = createSerializerHelper.make_response(teamSerializer.data, request.user.id)
 

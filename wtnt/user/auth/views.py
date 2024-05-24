@@ -12,14 +12,17 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django_redis import get_redis_connection
 
 from datetime import timedelta, datetime
 
 import requests
 from user.serializers import UserSerializer
+from user.tasks import send_email
 
 # Create your views here.
 
+client = get_redis_connection()
 User = get_user_model()
 
 
@@ -96,6 +99,11 @@ class FinishGithubLoginView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
+        code = request.data.get("code")
+        email = request.data.get("email")
+        if code != client.get(email):
+            return Response({"error": "Code Not Matched"}, status=status.HTTP_400_BAD_REQUEST)
+
         extra_data = SocialAccount.objects.get(user_id=request.user.id).extra_data
 
         user = User.objects.get(id=request.user.id)
@@ -109,6 +117,8 @@ class FinishGithubLoginView(APIView):
         user.save()
 
         serializer = self.serializer_class(user)
+
+        client.delete(email)
 
         return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
@@ -134,3 +144,25 @@ class WtntTokenRefreshView(TokenRefreshView):
         response.headers["access"] = token["access"]
 
         return response
+
+
+class EmailVerifyView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, *args, **kwargs):
+        code = request.data.get("code")
+        email = request.data.get("email")
+        answer = client.get(email)
+        if code == answer:
+            client.set(email, code)
+            return Response({"code": code}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Code not Matched"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        try:
+            send_email.delay(email)
+            return Response({"detail": "Succes to send Email"}, status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)

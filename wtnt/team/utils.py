@@ -1,6 +1,7 @@
 import wtnt.settings as settings
 import boto3
 
+from django.db.models import Q, Case, When, Value, BooleanField
 from team.models import Likes
 
 
@@ -41,29 +42,34 @@ class TeamCreateSerializerHelper:
             url_data = url_data.split(",")
 
         team_data["urls"] = url_data
+        leader_id = team_data["leader_id"]
         team_id = team_data["id"]
 
         return {
             "team": team_data,
-            "is_leader": self.is_leader(team_id, user_id),
+            "is_leader": self.is_leader(leader_id, user_id),
             "is_like": self.is_like(team_id, user_id),
         }
 
-    def make_responses(self, data, user_id):
-        to_return = []
-        for d in data:
-            if user_id:
-                stat = self.is_like(d["id"], user_id)
-            else:
-                stat = False
+    def make_responses(self, data, user_id, is_manage=None):
+        if is_manage:
+            for d in data:
+                if d["leader_id"] == user_id:
+                    d["is_leader"] = True
+        else:
+            team_ids = []
+            for d in data:
+                team_ids.append(d["id"])
 
-            d["is_like"] = stat
-            to_return.append(d)
+            likes = self.is_likes(team_ids, user_id)
 
-        return to_return
+            for d, like in zip(data, likes):
+                d["is_like"] = like
 
-    def is_leader(self, team_id, user_id):
-        return True if user_id == team_id else False
+        return data
+
+    def is_leader(self, leader_id, user_id):
+        return True if user_id == leader_id else False
 
     def is_like(self, team_id, user_id):
         try:
@@ -71,6 +77,26 @@ class TeamCreateSerializerHelper:
             return True
         except Likes.DoesNotExist:
             return False
+
+    #
+    def is_likes(self, team_ids, user_id):
+        likes = (
+            Likes.objects.filter(Q(user_id=user_id) & Q(team_id__in=team_ids))
+            .values("team_id")
+            .annotate(
+                exists=Case(When(user_id=user_id, then=Value(True)), default=Value(False), output_field=BooleanField())
+            )
+        )
+
+        result = [False] * len(team_ids)
+
+        likes_dict = {like["team_id"]: like["exists"] for like in likes}
+        for idx, team_id in enumerate(team_ids):
+            result[idx] = likes_dict.get(team_id, False)
+
+        return result
+
+    #
 
 
 class ApplySerializerHelper:
