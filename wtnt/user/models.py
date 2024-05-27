@@ -34,6 +34,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     def has_module_perms(self, app_label):
         return True
 
+    def finish_register(self, extra_data, request_data, *args, **kwargs):
+        self.student_num = str(request_data.get("student_num"))
+        self.name = request_data.get("name")
+        self.social_id = extra_data.get("id")
+        self.email = extra_data.get("login") + "@github.com"
+        self.image = extra_data.get("avatar_url")
+        self.position = request_data.get("position")
+
+        super().save(*args, **kwargs)
+
 
 class UserUrls(models.Model):
     user = models.OneToOneField(CustomUser, primary_key=True, on_delete=models.CASCADE)
