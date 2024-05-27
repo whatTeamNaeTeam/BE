@@ -4,14 +4,16 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from user.serializers import UserProfileSerializer, UserTechSerializer, UserUrlSerializer
+from user.serializers import UserTechSerializer, UserUrlSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from user.models import UserTech, UserUrls
 from team.models import TeamApply, Team, TeamUser, Likes
 from user.utils import profileSerializerHelper
 from team.utils import createSerializerHelper
+
 from core.exceptions import IsNotOwner
 from core.permissions import IsApprovedUser
+from .service import ProfileService
 
 User = get_user_model()
 
@@ -20,73 +22,17 @@ class UserProfileView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            owner_id = request.user.id
-        else:
-            owner_id = 0
-        user_id = kwargs.get("user_id")
+        profile_service = ProfileService(request, **kwargs)
+        data = profile_service.process_response_data()
 
-        user_queryset = User.objects.get(id=user_id)
-        if user_queryset:
-            try:
-                url_queryset = UserUrls.objects.get(user_id=user_id)
-                url_serializer = url_serializer = UserUrlSerializer(url_queryset)
-            except UserUrls.DoesNotExist:
-                url_serializer = None
-            try:
-                tech_queryset = UserTech.objects.get(user_id=user_id)
-                tech_serializer = UserTechSerializer(tech_queryset)
-            except UserTech.DoesNotExist:
-                tech_serializer = None
-
-            user_serializer = UserProfileSerializer(user_queryset)
-
-            return Response(
-                profileSerializerHelper.make_data(owner_id, user_serializer, url_serializer, tech_serializer),
-                status=status.HTTP_200_OK,
-            )
-
-        return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            owner_id = request.user.id
-        else:
-            owner_id = 0
-        user_id = kwargs.get("user_id")
+        profile_service = ProfileService(request, **kwargs)
+        profile_service.check_ownership()
+        explain, position = profile_service.update_user_info()
 
-        if user_id != owner_id:
-            raise IsNotOwner()
-
-        user = User.objects.get(id=user_id)
-        explain = request.data.get("explain")
-        serializer = UserProfileSerializer(user, data={"explain": explain}, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response({"explain": explain}, status=status.HTTP_202_ACCEPTED)
-
-        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            owner_id = request.user.id
-        else:
-            owner_id = 0
-        user_id = kwargs.get("user_id")
-
-        if user_id != owner_id:
-            raise IsNotOwner()
-
-        user = User.objects.get(id=user_id)
-        position = request.data.get("position")
-        serializer = UserProfileSerializer(user, data={"position": position}, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"explain": explain, "position": position}, status=status.HTTP_202_ACCEPTED)
 
 
 class UserTechView(APIView):
