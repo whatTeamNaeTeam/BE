@@ -1,4 +1,3 @@
-from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.views import APIView
@@ -15,7 +14,7 @@ from django.core.cache import cache
 from django_redis import get_redis_connection
 
 import requests
-from .service import AuthService
+from .service import AuthService, RegisterService
 from user.serializers import UserSerializer
 from user.tasks import send_email
 
@@ -68,26 +67,9 @@ class FinishGithubLoginView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        code = request.data.get("code")
-        email = request.data.get("email")
-        if code != client.get(email):
-            return Response({"error": "Code Not Matched"}, status=status.HTTP_400_BAD_REQUEST)
-
-        extra_data = SocialAccount.objects.get(user_id=request.user.id).extra_data
-
-        user = User.objects.get(id=request.user.id)
-        user.student_num = str(request.data.get("student_num"))
-        user.name = request.data.get("name")
-        user.social_id = extra_data.get("id")
-        user.email = extra_data.get("login") + "@github.com"
-        user.image = extra_data.get("avatar_url")
-        user.position = request.data.get("position")
-
-        user.save()
-
+        register_service = RegisterService(request)
+        user = register_service.finish_register_by_user_input()
         serializer = self.serializer_class(user)
-
-        client.delete(email)
 
         return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
@@ -121,7 +103,7 @@ class EmailVerifyView(APIView):
     def patch(self, request, *args, **kwargs):
         code = request.data.get("code")
         email = request.data.get("email")
-        answer = client.get(email)
+        answer = client.get(email).decode()
         if code == answer:
             client.set(email, code)
             return Response({"code": code}, status=status.HTTP_200_OK)
