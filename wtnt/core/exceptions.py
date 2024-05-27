@@ -9,3 +9,8 @@ class IsNotLeaderException(APIException):
 class IsNotOwner(APIException):
     status_code = 403
     default_detail = "It's not an owner"
+
+
+class CodeNotMatchError(APIException):
+    status_code = 400
+    default_detail = "Code Not Matched"
