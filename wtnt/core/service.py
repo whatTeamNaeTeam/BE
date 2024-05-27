@@ -1,3 +1,4 @@
 class BaseService:
-    def __init__(self, request):
+    def __init__(self, request, **kwargs):
         self.request = request
+        self.kwargs = kwargs
