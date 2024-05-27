@@ -1,14 +1,20 @@
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import get_user_model
-from django_redis import get_redis_connection
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
-from .utils import set_refresh_token_in_cache, get_refresh_token_in_cache, get_user_info
-from core.exceptions import CodeNotMatchError, RefreshTokenExpired
+from .utils import (
+    set_refresh_token_in_cache,
+    get_refresh_token_in_cache,
+    get_user_info,
+    get_code_in_redis_from_email,
+    delete_code_in_redis_from_email,
+    set_code_in_redis_from_email,
+)
+from core.exceptions import CodeNotMatchError, RefreshTokenExpired, CeleryTaskException
+from user.tasks import send_email
 
 User = get_user_model()
-client = get_redis_connection()
 
 
 class AuthService:
@@ -54,14 +60,14 @@ class RegisterService:
     def finish_register_by_user_input(self):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
-        if code != client.get(email).decode():
+        if code != get_code_in_redis_from_email():
             raise CodeNotMatchError()
 
         extra_data = SocialAccount.objects.get(user_id=self.request.user.id).extra_data
         user = User.objects.get(id=self.request.user.id)
         user.finish_register(extra_data=extra_data, request_data=self.request.data)
 
-        client.delete(email)
+        delete_code_in_redis_from_email(email)
 
         return user
 
@@ -89,3 +95,26 @@ class RefreshService:
         token = serializer.validated_data
 
         return token
+
+
+class EmailVerifyService:
+    def __init__(self, request):
+        self.request = request
+
+    def send_email(self):
+        email = self.request.data.get("email")
+
+        try:
+            send_email.delay(email)
+        except Exception as e:
+            raise CeleryTaskException(detail=str(e))
+
+    def check_code(self):
+        code = self.request.data.get("code")
+        email = self.request.data.get("email")
+
+        if code == get_code_in_redis_from_email(email):
+            set_code_in_redis_from_email(email, code)
+            return code
+
+        raise CodeNotMatchError()
