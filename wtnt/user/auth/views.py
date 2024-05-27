@@ -11,9 +11,8 @@ from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 
 import requests
-from .service import AuthService, RegisterService, RefreshService
+from .service import AuthService, RegisterService, RefreshService, EmailVerifyService
 from user.serializers import UserSerializer
-from user.tasks import send_email
 
 # Create your views here.
 
@@ -89,19 +88,13 @@ class EmailVerifyView(APIView):
     permission_classes = [AllowAny]
 
     def patch(self, request, *args, **kwargs):
-        code = request.data.get("code")
-        email = request.data.get("email")
-        answer = client.get(email).decode()
-        if code == answer:
-            client.set(email, code)
-            return Response({"code": code}, status=status.HTTP_200_OK)
-        else:
-            return Response({"error": "Code not Matched"}, status=status.HTTP_400_BAD_REQUEST)
+        email_verify_service = EmailVerifyService(request)
+        code = email_verify_service.check_code()
+
+        return Response({"code": code}, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get("email")
-        try:
-            send_email.delay(email)
-            return Response({"detail": "Succes to send Email"}, status=status.HTTP_202_ACCEPTED)
-        except Exception as e:
-            return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)
+        email_verify_service = EmailVerifyService(request)
+        email_verify_service.send_email()
+
+        return Response({"detail": "Success to Send Email"}, status=status.HTTP_200_OK)
