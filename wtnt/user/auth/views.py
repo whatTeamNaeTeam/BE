@@ -14,9 +14,8 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django_redis import get_redis_connection
 
-from datetime import timedelta, datetime
-
 import requests
+from .service import AuthService
 from user.serializers import UserSerializer
 from user.tasks import send_email
 
@@ -31,41 +30,11 @@ class GithubLoginView(SocialLoginView):
     client_class = OAuth2Client
 
     def post(self, request, *args, **kwargs):
-        is_web = request.META.get("HTTP_X_FROM", None)
-        if is_web == "web":
-            self.callback_url = "https://local.whatmeow.shop:3001/oauth/callback/github"
-        elif is_web == "app":
-            self.callback_url = "myapp://auth"
-        else:
-            self.callback_url = "http://localhost:8000/api/auth/github/callback"
+        auth_service = AuthService(request)
+        self.callback_url = auth_service.determine_callback_url()
 
         response = super().post(request, *args, **kwargs)
-        response_data = response.data
-        refresh_token = response_data.get("refresh", None)
-        access_token = response_data.get("access", None)
-        user_id = response_data["user"]["pk"]
-
-        if refresh_token:
-            cache.set(user_id, refresh_token)
-            cache.expire_at(user_id, datetime.now() + timedelta(days=7))
-            response_data.pop("refresh")
-
-        _, email = response_data["user"]["email"].split("@")
-        response_data.pop("user")
-
-        if "sample.com" in email:
-            response_data["registered"] = False
-        else:
-            response_data["registered"] = True
-            user = User.objects.get(id=user_id)
-            response_data["user"] = {
-                "name": user.name,
-                "student_num": user.student_num,
-                "id": user.id,
-                "image": user.image,
-            }
-
-        response_data.pop("access")
+        response_data, access_token = auth_service.process_response_data(response.data)
 
         response = Response(response_data, status=status.HTTP_200_OK)
         response.headers["access"] = access_token
