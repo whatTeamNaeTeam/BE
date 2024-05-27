@@ -24,3 +24,22 @@ class RefreshTokenExpired(APIException):
 class CeleryTaskException(APIException):
     status_code = 400
     default_detail = ""
+
+
+class NotFoundException(APIException):
+    status_code = 404
+    default_detail = "No Content"
+
+
+class SerializerNotValidException(APIException):
+    status_code = 400
+    default_detail = ""
+
+    @staticmethod
+    def get_detail(error_dict):
+        error_messages = ""
+        for field, errors in error_dict.items():
+            for error in errors:
+                error_messages += f"{field}: {error}\n"
+
+        return error_messages
