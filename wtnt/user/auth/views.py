@@ -5,16 +5,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenRefreshView
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django_redis import get_redis_connection
 
 import requests
-from .service import AuthService, RegisterService
+from .service import AuthService, RegisterService, RefreshService
 from user.serializers import UserSerializer
 from user.tasks import send_email
 
@@ -76,22 +73,13 @@ class FinishGithubLoginView(APIView):
 
 class WtntTokenRefreshView(TokenRefreshView):
     def post(self, request: Request, *args, **kwargs):
-        _, access_token = request.META.get("HTTP_AUTHORIZATION").split(" ")
-        user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+        refresh_service = RefreshService(request)
+        refresh_token = refresh_service.extract_refresh_token()
 
-        refresh_token = cache.get(user_id)
-        if not refresh_token:
-            return Response({"error": "Expired Refresh Token"}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = self.get_serializer(data={"refresh": refresh_token})
+        token = refresh_service.get_new_access_token_from_serializer(serializer)
 
-        try:
-            serializer.is_valid(raise_exception=True)
-        except TokenError as e:
-            raise InvalidToken(e.args[0])
-
-        token = serializer.validated_data
-        response = Response({"success": True}, status=status.HTTP_200_OK)
-
+        response = Response({"detail": "Success to Token Refreshing"}, status=status.HTTP_200_OK)
         response.headers["access"] = token["access"]
 
         return response
