@@ -19,3 +19,8 @@ class CodeNotMatchError(APIException):
 class RefreshTokenExpired(APIException):
     status_code = 401
     default_detail = "Expired Refresh Token"
+
+
+class CeleryTaskException(APIException):
+    status_code = 400
+    default_detail = ""
