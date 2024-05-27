@@ -14,3 +14,8 @@ class IsNotOwner(APIException):
 class CodeNotMatchError(APIException):
     status_code = 400
     default_detail = "Code Not Matched"
+
+
+class RefreshTokenExpired(APIException):
+    status_code = 401
+    default_detail = "Expired Refresh Token"
