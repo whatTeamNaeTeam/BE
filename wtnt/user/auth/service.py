@@ -11,16 +11,14 @@ from .utils import (
     delete_code_in_redis_from_email,
     set_code_in_redis_from_email,
 )
+from core.service import BaseService
 from core.exceptions import CodeNotMatchError, RefreshTokenExpired, CeleryTaskException
 from user.tasks import send_email
 
 User = get_user_model()
 
 
-class AuthService:
-    def __init__(self, request):
-        self.request = request
-
+class AuthService(BaseService):
     def determine_callback_url(self):
         is_web = self.request.META.get("HTTP_X_FROM", None)
         if is_web == "web":
@@ -53,10 +51,7 @@ class AuthService:
         return response_data, access_token
 
 
-class RegisterService:
-    def __init__(self, request):
-        self.request = request
-
+class RegisterService(BaseService):
     def finish_register_by_user_input(self):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
@@ -72,10 +67,7 @@ class RegisterService:
         return user
 
 
-class RefreshService:
-    def __init__(self, request):
-        self.request = request
-
+class RefreshService(BaseService):
     def extract_refresh_token(self):
         _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
         user_id = AccessToken(access_token, verify=False).payload.get("user_id")
@@ -97,10 +89,7 @@ class RefreshService:
         return token
 
 
-class EmailVerifyService:
-    def __init__(self, request):
-        self.request = request
-
+class EmailVerifyService(BaseService):
     def send_email(self):
         email = self.request.data.get("email")
 
