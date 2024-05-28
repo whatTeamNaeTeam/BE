@@ -4,7 +4,7 @@ from core.service import BaseService
 from core.exceptions import NotFoundException, IsNotOwner, SerializerNotValidException
 from user.models import UserUrls, UserTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
-from .utils import make_data, make_url_data
+from .utils import make_data, make_url_data, make_tech_data
 
 User = get_user_model()
 
@@ -78,3 +78,20 @@ class ProfileService(BaseService):
             return data
 
         raise SerializerNotValidException(detail=SerializerNotValidException.get_detail(serializer.errors))
+
+    def update_tech_info(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+        tech = self.request.data.get("tech")
+
+        user_tech = UserTech.objects.get(user_id=user_id)
+        if user_tech:
+            serializer = self.serializer_class(user_tech, data={"tech": tech}, partial=True)
+        else:
+            data = {"user_id": owner_id, "tech": tech}
+            serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            data = make_tech_data(serializer.data)
+            return data
