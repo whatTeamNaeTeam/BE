@@ -8,7 +8,7 @@ from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from team.models import TeamApply, Team, TeamUser, Likes
 from team.utils import createSerializerHelper
 
-from core.exceptions import IsNotOwner
+from core.exceptions import IsNotOwnerError
 from core.permissions import IsApprovedUser
 from .service import ProfileService
 
@@ -85,7 +85,7 @@ class UserManageActivityView(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = kwargs.get("user_id")
         if owner_id != request.user.id:
-            raise IsNotOwner()
+            raise IsNotOwnerError()
 
         team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=team_ids)
@@ -101,7 +101,7 @@ class UserLikeTeamView(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = kwargs.get("user_id")
         if owner_id != request.user.id:
-            raise IsNotOwner()
+            raise IsNotOwnerError()
 
         like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=like_team_ids)

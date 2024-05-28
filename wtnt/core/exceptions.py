@@ -1,12 +1,12 @@
 from rest_framework.exceptions import APIException
 
 
-class IsNotLeaderException(APIException):
+class IsNotLeaderError(APIException):
     status_code = 403
     default_detail = "It's not leader of team"
 
 
-class IsNotOwner(APIException):
+class IsNotOwnerError(APIException):
     status_code = 403
     default_detail = "It's not an owner"
 
@@ -16,22 +16,22 @@ class CodeNotMatchError(APIException):
     default_detail = "Code Not Matched"
 
 
-class RefreshTokenExpired(APIException):
+class RefreshTokenExpiredError(APIException):
     status_code = 401
     default_detail = "Expired Refresh Token"
 
 
-class CeleryTaskException(APIException):
+class CeleryTaskError(APIException):
     status_code = 400
     default_detail = ""
 
 
-class NotFoundException(APIException):
+class NotFoundError(APIException):
     status_code = 404
     default_detail = "No Content"
 
 
-class SerializerNotValidException(APIException):
+class SerializerNotValidError(APIException):
     status_code = 400
     default_detail = ""
 

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 
 from core.service import BaseService
-from core.exceptions import NotFoundException, IsNotOwner, SerializerNotValidException
+from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError
 from user.models import UserUrls, UserTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
 from .utils import make_data, make_url_data, make_tech_data
@@ -20,7 +20,7 @@ class ProfileService(BaseService):
 
             return make_data(user_serializer.data, url, tech, user_id)
         except User.DoesNotExist:
-            raise NotFoundException()
+            raise NotFoundError()
 
     def get_url_data(self, user_id):
         try:
@@ -51,14 +51,14 @@ class ProfileService(BaseService):
             serializer.save()
             return {"explain": explain, "position": position}
 
-        raise SerializerNotValidException(detail=SerializerNotValidException.get_detail(serializer.errors))
+        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
     def check_ownership(self):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
         if owner_id != user_id:
-            raise IsNotOwner()
+            raise IsNotOwnerError()
 
     def update_user_url_info(self):
         owner_id = self.kwargs.get("user_id")
@@ -77,7 +77,7 @@ class ProfileService(BaseService):
             data = make_url_data(serializer.data)
             return data
 
-        raise SerializerNotValidException(detail=SerializerNotValidException.get_detail(serializer.errors))
+        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
     def update_tech_info(self):
         owner_id = self.kwargs.get("user_id")

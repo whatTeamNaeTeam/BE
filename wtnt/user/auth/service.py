@@ -5,7 +5,7 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 from .utils import get_user_info, RedisAuthUtils
 from core.service import BaseService
-from core.exceptions import CodeNotMatchError, RefreshTokenExpired, CeleryTaskException
+from core.exceptions import CodeNotMatchError, RefreshTokenExpiredError, CeleryTaskError
 from user.tasks import send_email
 
 User = get_user_model()
@@ -67,7 +67,7 @@ class RefreshService(BaseService):
 
         refresh_token = RedisAuthUtils.get_refresh_token_in_cache(user_id)
         if not refresh_token:
-            raise RefreshTokenExpired()
+            raise RefreshTokenExpiredError()
 
         return refresh_token
 
@@ -89,7 +89,7 @@ class EmailVerifyService(BaseService):
         try:
             send_email.delay(email)
         except Exception as e:
-            raise CeleryTaskException(detail=str(e))
+            raise CeleryTaskError(detail=str(e))
 
     def check_code(self):
         code = self.request.data.get("code")
