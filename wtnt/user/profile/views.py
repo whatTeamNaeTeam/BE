@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from user.serializers import UserTechSerializer, UserUrlSerializer
+from user.serializers import UserTechSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
-from user.models import UserTech, UserUrls
+from user.models import UserTech
 from team.models import TeamApply, Team, TeamUser, Likes
 from user.utils import profileSerializerHelper
 from team.utils import createSerializerHelper
@@ -30,9 +30,9 @@ class UserProfileView(APIView):
     def patch(self, request, *args, **kwargs):
         profile_service = ProfileService(request, **kwargs)
         profile_service.check_ownership()
-        explain, position = profile_service.update_user_info()
+        data = profile_service.update_user_info()
 
-        return Response({"explain": explain, "position": position}, status=status.HTTP_202_ACCEPTED)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class UserTechView(APIView):
@@ -66,30 +66,13 @@ class UserTechView(APIView):
 
 class UserUrlView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = UserUrlSerializer
 
     def post(self, request, *args, **kwargs):
-        owner_id = kwargs.get("user_id")
-        user_id = request.user.id
-        url = request.data.get("url")
+        profile_service = ProfileService(request, **kwargs)
+        profile_service.check_ownership()
+        data = profile_service.update_user_url_info()
 
-        if owner_id != user_id:
-            raise IsNotOwner()
-
-        user_url = UserUrls.objects.filter(user_id=user_id).first()
-
-        if user_url:
-            serializer = self.serializer_class(user_url, data={"url": url}, partial=True)
-        else:
-            data = {"user_id": owner_id, "url": url}
-            serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"urls": profileSerializerHelper.make_url_data(url)}, status=status.HTTP_202_ACCEPTED)
-
-        else:
-            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class UserMyActivityView(APIView):
