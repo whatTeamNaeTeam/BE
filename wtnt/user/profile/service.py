@@ -4,7 +4,7 @@ from core.service import BaseService
 from core.exceptions import NotFoundException, IsNotOwner, SerializerNotValidException
 from user.models import UserUrls, UserTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
-from .utils import make_data
+from .utils import make_data, make_url_data
 
 User = get_user_model()
 
@@ -49,7 +49,7 @@ class ProfileService(BaseService):
 
         if serializer.is_valid():
             serializer.save()
-            return explain, position
+            return {"explain": explain, "position": position}
 
         raise SerializerNotValidException(detail=SerializerNotValidException.get_detail(serializer.errors))
 
@@ -59,3 +59,22 @@ class ProfileService(BaseService):
 
         if owner_id != user_id:
             raise IsNotOwner()
+
+    def update_user_url_info(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+        url = self.request.data.get("url")
+
+        user_url = UserUrls.objects.get(user_id=user_id)
+        if user_url:
+            serializer = self.serializer_class(user_url, data={"url": url}, partial=True)
+        else:
+            data = {"user_id": owner_id, "url": url}
+            serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            data = make_url_data(serializer.data)
+            return data
+
+        raise SerializerNotValidException(detail=SerializerNotValidException.get_detail(serializer.errors))
