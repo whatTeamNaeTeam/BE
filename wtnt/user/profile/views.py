@@ -4,11 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from user.serializers import UserTechSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
-from user.models import UserTech
 from team.models import TeamApply, Team, TeamUser, Likes
-from user.utils import profileSerializerHelper
 from team.utils import createSerializerHelper
 
 from core.exceptions import IsNotOwner
@@ -37,31 +34,13 @@ class UserProfileView(APIView):
 
 class UserTechView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = UserTechSerializer
 
     def post(self, request, *args, **kwargs):
-        owner_id = kwargs.get("user_id")
-        user_id = request.user.id
-        tech = request.data.get("tech")
+        profile_service = ProfileService(request, **kwargs)
+        profile_service.check_ownership()
+        data = profile_service.update_tech_info()
 
-        if owner_id != user_id:
-            raise IsNotOwner()
-
-        user_tech = UserTech.objects.filter(user_id=user_id).first()
-
-        if user_tech:
-            serializer = self.serializer_class(user_tech, data={"tech": tech}, partial=True)
-
-        else:
-            data = {"user_id": owner_id, "tech": tech}
-            serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"tech": profileSerializerHelper.make_tech_data(tech)}, status=status.HTTP_202_ACCEPTED)
-
-        else:
-            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class UserUrlView(APIView):
