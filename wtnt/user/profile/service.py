@@ -4,7 +4,7 @@ from core.service import BaseService
 from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError
 from user.models import UserUrls, UserTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
-from .utils import make_data, make_url_data, make_tech_data
+from .utils import ProfileResponse
 
 User = get_user_model()
 
@@ -18,7 +18,7 @@ class ProfileService(BaseService):
             tech = self.get_tech_data(user_id)
             user_serializer = UserProfileSerializer(user)
 
-            return make_data(user_serializer.data, url, tech, user_id)
+            return ProfileResponse.make_data(user_serializer.data, url, tech, user_id)
         except User.DoesNotExist:
             raise NotFoundError()
 
@@ -74,7 +74,7 @@ class ProfileService(BaseService):
 
         if serializer.is_valid():
             serializer.save()
-            data = make_url_data(serializer.data)
+            data = ProfileResponse.make_url_data(serializer.data)
             return data
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
@@ -93,5 +93,5 @@ class ProfileService(BaseService):
 
         if serializer.is_valid():
             serializer.save()
-            data = make_tech_data(serializer.data)
+            data = ProfileResponse.make_tech_data(serializer.data)
             return data
