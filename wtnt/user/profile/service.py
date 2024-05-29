@@ -5,7 +5,7 @@ from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidEr
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
-from team.serializers import TeamListSerializer
+from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
 from core.utils.team import make_team_list
 
@@ -125,5 +125,18 @@ class MyActivityServcie(BaseService):
         serializer = TeamListSerializer(team_data, many=True)
         teams = make_team_list(serializer.data, user_id)
         data = ProfileResponse.make_activity_data(teams, owner_id, user_id)
+
+        return data
+
+
+class MyTeamManageService(BaseServiceWithCheckOwnership):
+    def get_my_teams(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+
+        team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_data = Team.objects.filter(id__in=team_ids)
+        serializer = TeamManageActivitySerializer(team_data, many=True)
+        data = make_team_list(serializer.data, user_id, is_manage=True)
 
         return data
