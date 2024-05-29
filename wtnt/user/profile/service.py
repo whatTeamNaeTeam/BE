@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model
 
 from core.service import BaseService
-from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError
+from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError, KeywordNotMatchError
 from user.models import UserUrls, UserTech
+from team.models import Team, TeamApply, TeamUser
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
-from .utils import ProfileResponse
+from team.serializers import TeamListSerializer
+from core.utils.profile import ProfileResponse
+from core.utils.team import make_team_list
 
 User = get_user_model()
 
@@ -95,3 +98,28 @@ class ProfileService(BaseService):
             serializer.save()
             data = ProfileResponse.make_tech_data(serializer.data)
             return data
+
+
+class MyActivityServcie(BaseService):
+    def get_my_activity(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+        keyword = self.request.query_params.get("keyword")
+
+        if keyword == "apply":
+            team_ids = TeamApply.objects.filter(user_id=owner_id, is_approved=False).values_list("team_id", flat=True)
+            team_data = Team.objects.filter(id__in=team_ids)
+        else:
+            team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+            if keyword == "accomplished":
+                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+            elif keyword == "inprogress":
+                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+            else:
+                raise KeywordNotMatchError()
+
+        serializer = TeamListSerializer(team_data, many=True)
+        teams = make_team_list(serializer.data, user_id)
+        data = ProfileResponse.make_activity_data(teams, owner_id, user_id)
+
+        return data
