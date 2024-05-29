@@ -5,12 +5,12 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
-from team.models import TeamApply, Team, TeamUser, Likes
+from team.models import Team, TeamUser, Likes
 from team.utils import createSerializerHelper
 
 from core.exceptions import IsNotOwnerError
 from core.permissions import IsApprovedUser
-from .service import ProfileService
+from .service import ProfileService, MyActivityServcie
 
 User = get_user_model()
 
@@ -58,25 +58,10 @@ class UserMyActivityView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        user_id = kwargs.get("user_id")
-        keyword = request.query_params.get("keyword")
-        if keyword == "apply":
-            team_ids = TeamApply.objects.filter(user_id=user_id, is_approved=False).values_list("team_id", flat=True)
-            team_data = Team.objects.filter(id__in=team_ids)
-        else:
-            team_ids = TeamUser.objects.filter(user_id=user_id).values_list("team_id", flat=True)
-            if keyword == "accomplished":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
-            elif keyword == "inprogress":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
-            else:
-                return Response({"error": "Wrong Keyword"}, status=status.HTTP_400_BAD_REQUEST)
+        myactivity_service = MyActivityServcie(request, **kwargs)
+        data = myactivity_service.get_my_activity()
 
-        serializer = TeamListSerializer(team_data, many=True)
-        data = createSerializerHelper.make_responses(serializer.data, request.user.id)
-        is_owner = True if user_id == request.user.id else False
-
-        return Response({"team": data, "is_owner": is_owner}, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class UserManageActivityView(APIView):
