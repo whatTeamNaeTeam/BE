@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 
-from core.exceptions import IsNotLeaderException
+from core.exceptions import IsNotLeaderError
 from core.permissions import IsApprovedUser
 from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamListSerializer
@@ -67,7 +67,7 @@ class TeamDetailView(APIView):
         try:
             team = Team.objects.get(id=team_id)
             if team.leader != request.user.id:
-                raise IsNotLeaderException()
+                raise IsNotLeaderError()
 
             url = request.data.get("urls")
             serializer = TeamCreateSerializer(team, {"url": url}, partial=True)
@@ -83,7 +83,7 @@ class TeamDetailView(APIView):
         try:
             team = Team.objects.get(id=team_id)
             if team.leader != request.user.id:
-                raise IsNotLeaderException()
+                raise IsNotLeaderError()
 
             name = request.data.get("name")
             explain = request.data.get("explain")
