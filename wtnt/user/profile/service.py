@@ -12,16 +12,27 @@ from core.utils.team import make_team_list
 User = get_user_model()
 
 
-class ProfileService(BaseService):
+class BaseServiceWithCheckOwnership(BaseService):
+    def check_ownership(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+
+        if owner_id != user_id:
+            raise IsNotOwnerError()
+
+
+class ProfileService(BaseServiceWithCheckOwnership):
     def process_response_data(self):
         user_id = self.kwargs.get("user_id")
+        owner_id = self.request.user.id
+
         try:
             user = User.objects.get(id=user_id)
             url = self.get_url_data(user_id)
             tech = self.get_tech_data(user_id)
             user_serializer = UserProfileSerializer(user)
 
-            return ProfileResponse.make_data(user_serializer.data, url, tech, user_id)
+            return ProfileResponse.make_data(user_serializer.data, url, tech, owner_id)
         except User.DoesNotExist:
             raise NotFoundError()
 
@@ -55,13 +66,6 @@ class ProfileService(BaseService):
             return {"explain": explain, "position": position}
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
-    def check_ownership(self):
-        owner_id = self.kwargs.get("user_id")
-        user_id = self.request.user.id
-
-        if owner_id != user_id:
-            raise IsNotOwnerError()
 
     def update_user_url_info(self):
         owner_id = self.kwargs.get("user_id")

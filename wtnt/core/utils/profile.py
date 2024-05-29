@@ -1,7 +1,7 @@
 class ProfileResponse:
     @staticmethod
-    def make_data(user, url, tech, user_id):
-        return {"profile": user, "url": url, "tech": tech, "is_owner": user["id"] == user_id}
+    def make_data(user, url, tech, owner_id):
+        return {"profile": user, "url": url, "tech": tech, "is_owner": user["id"] == owner_id}
 
     @staticmethod
     def make_url_data(url):
