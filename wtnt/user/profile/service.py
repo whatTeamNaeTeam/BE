@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from core.service import BaseService
 from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError, KeywordNotMatchError
 from user.models import UserUrls, UserTech
-from team.models import Team, TeamApply, TeamUser
+from team.models import Team, TeamApply, TeamUser, Likes
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
@@ -104,7 +104,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
             return data
 
 
-class MyActivityServcie(BaseService):
+class MyActivityServcie(BaseServiceWithCheckOwnership):
     def get_my_activity(self):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
@@ -125,6 +125,16 @@ class MyActivityServcie(BaseService):
         serializer = TeamListSerializer(team_data, many=True)
         teams = make_team_list(serializer.data, user_id)
         data = ProfileResponse.make_activity_data(teams, owner_id, user_id)
+
+        return data
+
+    def get_like_activity(self):
+        owner_id = self.request.user.id
+
+        like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_data = Team.objects.filter(id__in=like_team_ids)
+        serializer = TeamListSerializer(team_data, many=True)
+        data = make_team_list(serializer.data, owner_id)
 
         return data
 
