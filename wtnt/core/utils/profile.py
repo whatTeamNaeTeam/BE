@@ -12,3 +12,7 @@ class ProfileResponse:
     def make_tech_data(tech):
         data = tech.split(",")
         return [{"name": name} for name in data]
+
+    @staticmethod
+    def make_activity_data(teams, user_id, owner_id):
+        return {"team": teams, "is_owner": user_id == owner_id}
