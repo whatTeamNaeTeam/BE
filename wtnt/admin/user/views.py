@@ -7,38 +7,31 @@ from django.db.models import Q
 
 from core.pagenations import ListPagenationSize10
 from admin.serializers import ApproveUserSerializer
+from .service import AdminUserService
 
 User = get_user_model()
 
 
 class UserManageView(APIView):
-    serializer_class = ApproveUserSerializer
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        queryset = User.objects.filter(is_approved=False, is_superuser=False)
-        if queryset:
-            serializer = self.serializer_class(queryset, many=True)
-            return Response(serializer.data)
-        else:
-            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+        admin_service = AdminUserService(request)
+        data = admin_service.get_not_approved_users()
+
+        return Response(data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
-        user_ids = [int(id) for id in request.data.get("ids").split(",")]
-        User.objects.filter(id__in=user_ids).update(is_approved=True)
+        admin_service = AdminUserService(request)
+        data = admin_service.approve_users()
 
-        return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, *args, **kwargs):
-        user_ids = [int(id) for id in request.data.get("ids").split(",")]
-        try:
-            user = User.objects.filter(id__in=user_ids)
-            user.delete()
+        admin_service = AdminUserService(request)
+        data = admin_service.reject_users()
 
-            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
-
-        except User.DoesNotExist:
-            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
 class UserDeleteView(APIView, ListPagenationSize10):
