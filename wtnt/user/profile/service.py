@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 
-from core.service import BaseService
-from core.exceptions import NotFoundError, IsNotOwnerError, SerializerNotValidError, KeywordNotMatchError
+from core.service import BaseServiceWithCheckOwnership
+from core.exceptions import NotFoundError, SerializerNotValidError, KeywordNotMatchError
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
@@ -10,15 +10,6 @@ from core.utils.profile import ProfileResponse
 from core.utils.team import make_team_list
 
 User = get_user_model()
-
-
-class BaseServiceWithCheckOwnership(BaseService):
-    def check_ownership(self):
-        owner_id = self.kwargs.get("user_id")
-        user_id = self.request.user.id
-
-        if owner_id != user_id:
-            raise IsNotOwnerError()
 
 
 class ProfileService(BaseServiceWithCheckOwnership):
