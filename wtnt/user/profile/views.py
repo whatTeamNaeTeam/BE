@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from team.serializers import TeamListSerializer, TeamManageActivitySerializer
-from team.models import Team, TeamUser, Likes
+from team.serializers import TeamListSerializer
+from team.models import Team, Likes
 from team.utils import createSerializerHelper
 
 from core.exceptions import IsNotOwnerError
 from core.permissions import IsApprovedUser
-from .service import ProfileService, MyActivityServcie
+from .service import ProfileService, MyActivityServcie, MyTeamManageService
 
 User = get_user_model()
 
@@ -68,14 +68,9 @@ class UserManageActivityView(APIView):
     permission_classes = [IsApprovedUser]
 
     def get(self, request, *args, **kwargs):
-        owner_id = kwargs.get("user_id")
-        if owner_id != request.user.id:
-            raise IsNotOwnerError()
-
-        team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
-        team_data = Team.objects.filter(id__in=team_ids)
-        serializer = TeamManageActivitySerializer(team_data, many=True)
-        data = createSerializerHelper.make_responses(serializer.data, request.user.id, is_manage=True)
+        myteam_service = MyTeamManageService(request, **kwargs)
+        myteam_service.check_ownership()
+        data = myteam_service.get_my_teams()
 
         return Response({"team": data}, status=status.HTTP_200_OK)
 
