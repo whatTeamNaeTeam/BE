@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
-from .utils import get_user_info, RedisAuthUtils
+from core.utils.auth import get_user_info, RedisAuthUtils
 from core.service import BaseService
 from core.exceptions import CodeNotMatchError, RefreshTokenExpiredError, CeleryTaskError
 from user.tasks import send_email

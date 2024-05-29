@@ -43,3 +43,8 @@ class SerializerNotValidError(APIException):
                 error_messages += f"{field}: {error}\n"
 
         return error_messages
+
+
+class KeywordNotMatchError(APIException):
+    status_code = 400
+    default_datail = "Keyword Not Matched"
