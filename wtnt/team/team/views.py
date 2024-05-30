@@ -10,7 +10,8 @@ from core.permissions import IsApprovedUser
 from core.pagenations import TeamPagination
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 from team.utils import createSerializerHelper
-from team.models import Team, TeamUser
+from team.models import Team
+from .service import TeamService
 
 # Create your views here.
 client = get_redis_connection("default")
@@ -21,21 +22,9 @@ class TeamView(APIView):
     permission_classes = [IsApprovedUser]
 
     def post(self, request, *args, **kwargs):
-        url = createSerializerHelper.upload_s3(request.data.get("name"), request.FILES.get("image"))
-        team_data = createSerializerHelper.make_data(
-            request.user.id, request.data, url, request.data.getlist("subCategory"), request.data.getlist("memberCount")
-        )
-        createSerializer = TeamCreateSerializer(data=team_data)
-
-        if createSerializer.is_valid():
-            team = createSerializer.save()
-            #
-            teamUser = TeamUser(team_id=team.id, user_id=request.user.id)
-            teamUser.save()
-            #
-            return Response(createSerializer.data, status=status.HTTP_201_CREATED)
-
-        return Response({"error": createSerializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        team_service = TeamService(request)
+        data = team_service.create_team()
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class TeamDetailView(APIView):
