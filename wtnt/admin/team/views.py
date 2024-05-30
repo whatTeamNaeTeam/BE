@@ -35,27 +35,18 @@ class TeamManageView(APIView):
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
-class TeamDeleteView(APIView, ListPagenationSize10):
+class TeamDeleteView(APIView):
     permission_classes = [IsAdminUser]
-    serializer_class = ApproveTeamSerializer
 
     def get(self, request):
-        queryset = Team.objects.filter(is_approved=True).order_by("id")
-        paginated = self.paginate_queryset(queryset, request, view=self)
-        serializer = self.serializer_class(paginated, many=True)
-
-        return self.get_paginated_response(serializer.data)
+        admin_service = AdminTeamService(request)
+        return admin_service.get_approved_teams()
 
     def delete(self, request, *args, **kwargs):
-        team_ids = [int(id) for id in request.data.get("ids").split(",")]
-        try:
-            team = Team.objects.filter(id__in=team_ids)
-            team.delete()
+        admin_service = AdminTeamService(request)
+        data = admin_service.reject_teams(status=True)
 
-            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
-
-        except User.DoesNotExist:
-            return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
 class TeamSearchView(APIView, ListPagenationSize10):
