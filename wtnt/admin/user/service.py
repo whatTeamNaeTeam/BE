@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 
-from core.exceptions import NotFoundError
+from core.exceptions import NotFoundError, KeywordNotMatchError
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
 from admin.serializers import ApproveUserSerializer
@@ -40,3 +40,25 @@ class AdminUserService(BaseService, ListPagenationSize10):
         serializer = ApproveUserSerializer(paginated, many=True)
 
         return self.get_paginated_response(serializer.data)
+
+    def search_users(self):
+        keyword = self.request.query_params.get("keyword")
+        search_filter = self.request.query_params.get("filter")
+
+        try:
+            if search_filter == "name":
+                queryset = User.objects.search_by_name(name=keyword)
+            elif search_filter == "student_num":
+                queryset = User.objects.search_by_student_num(student_num=keyword)
+            elif search_filter == "position":
+                queryset = User.objects.search_by_position(position=keyword)
+            else:
+                raise KeywordNotMatchError()
+
+            paginated = self.paginate_queryset(queryset, self.request, view=self)
+            serializer = ApproveUserSerializer(paginated, many=True)
+
+            return self.get_paginated_response(serializer.data)
+
+        except User.DoesNotExist:
+            raise NotFoundError()
