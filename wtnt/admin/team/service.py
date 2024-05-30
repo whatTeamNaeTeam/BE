@@ -1,10 +1,11 @@
 from admin.serializers import ApproveTeamSerializer
 from core.exceptions import NotFoundError
+from core.pagenations import ListPagenationSize10
 from core.service import BaseService
 from team.models import Team
 
 
-class AdminTeamService(BaseService):
+class AdminTeamService(BaseService, ListPagenationSize10):
     def get_not_approved_team(self):
         try:
             queryset = Team.objects.filter(is_approved=False, is_superuser=False)
@@ -29,3 +30,10 @@ class AdminTeamService(BaseService):
             return {"detail": "Success to reject teams"}
         else:
             raise NotFoundError()
+
+    def get_approved_teams(self):
+        queryset = Team.objects.filter(is_approved=True).order_by("id")
+        paginated = self.paginate_queryset(queryset, self.request, view=self)
+        serializer = ApproveTeamSerializer(paginated, many=True)
+
+        return self.get_paginated_response(serializer.data)
