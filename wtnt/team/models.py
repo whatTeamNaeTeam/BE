@@ -2,7 +2,7 @@ from django.db import models
 
 from core.models import TimestampedModel
 from user.models import CustomUser
-from .manager import LikesManager
+from .manager import LikesManager, TeamManager
 
 # Create your models here.
 
@@ -19,6 +19,7 @@ class Team(TimestampedModel):
     url = models.BinaryField(null=True)
     is_approved = models.BooleanField(default=False)
     is_accomplished = models.BooleanField(default=False)
+    objects = TeamManager()
 
 
 class TeamApply(TimestampedModel):
