@@ -29,7 +29,7 @@ class UserManageView(APIView):
 
     def delete(self, request, *args, **kwargs):
         admin_service = AdminUserService(request)
-        data = admin_service.reject_users()
+        data = admin_service.reject_users(status=False)
 
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
@@ -39,23 +39,14 @@ class UserDeleteView(APIView, ListPagenationSize10):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        queryset = User.objects.filter(is_approved=True, is_superuser=False).order_by("student_num")
-        paginated = self.paginate_queryset(queryset, request, view=self)
-        serializer = self.serializer_class(paginated, many=True)
-
-        return self.get_paginated_response(serializer.data)
+        admin_service = AdminUserService(request)
+        return admin_service.get_approved_users()
 
     def delete(self, request, *args, **kwargs):
-        user_ids = [int(id) for id in request.data.get("ids").split(",")]
+        admin_service = AdminUserService(request)
+        data = admin_service.reject_users(status=True)
 
-        try:
-            user = User.objects.filter(id__in=user_ids)
-            user.delete()
-
-            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
-
-        except User.DoesNotExist:
-            return Response({"error": "User Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
 class UserSearchView(APIView, ListPagenationSize10):
