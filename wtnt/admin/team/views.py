@@ -8,37 +8,31 @@ from django.db.models import Q
 from core.pagenations import ListPagenationSize10
 from team.models import Team
 from admin.serializers import ApproveTeamSerializer
+from .service import AdminTeamService
 
 User = get_user_model()
 
 
 class TeamManageView(APIView):
     permission_classes = [IsAdminUser]
-    serializer_class = ApproveTeamSerializer
 
     def get(self, request):
-        queryset = Team.objects.filter(is_approved=False)
-        serialzer = self.serializer_class(queryset, many=True)
+        admin_service = AdminTeamService(request)
+        data = admin_service.get_not_approved_team()
 
-        return Response(serialzer.data, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
-        team_ids = [int(id) for id in request.data.get("ids").split(",")]
-        Team.objects.filter(id__in=team_ids).update(is_approved=True)
+        admin_service = AdminTeamService(request)
+        data = admin_service.approve_teams()
 
-        return Response({"success": True}, status=status.HTTP_202_ACCEPTED)
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
     def delete(self, request, *args, **kwargs):
-        team_ids = [int(id) for id in request.data.get("ids").split(",")]
+        admin_service = AdminTeamService(request)
+        data = admin_service.reject_teams(status=False)
 
-        try:
-            team = Team.objects.filter(id__in=team_ids)
-            team.delete()
-
-            return Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
-
-        except User.DoesNotExist:
-            return Response({"error": "Team Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
 class TeamDeleteView(APIView, ListPagenationSize10):
