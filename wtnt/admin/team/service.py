@@ -8,7 +8,7 @@ from team.models import Team
 class AdminTeamService(BaseService, ListPagenationSize10):
     def get_not_approved_team(self):
         try:
-            queryset = Team.objects.filter(is_approved=False, is_superuser=False)
+            queryset = Team.objects.filter(is_approved=False)
             serializer = ApproveTeamSerializer(queryset, many=True)
             return serializer.data
 
