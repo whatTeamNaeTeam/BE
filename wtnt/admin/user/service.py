@@ -45,20 +45,19 @@ class AdminUserService(BaseService, ListPagenationSize10):
         keyword = self.request.query_params.get("keyword")
         search_filter = self.request.query_params.get("filter")
 
-        try:
-            if search_filter == "name":
-                queryset = User.objects.search_by_name(name=keyword)
-            elif search_filter == "student_num":
-                queryset = User.objects.search_by_student_num(student_num=keyword)
-            elif search_filter == "position":
-                queryset = User.objects.search_by_position(position=keyword)
-            else:
-                raise KeywordNotMatchError()
+        if search_filter == "name":
+            queryset = User.objects.search_by_name(name=keyword)
+        elif search_filter == "student_num":
+            queryset = User.objects.search_by_student_num(student_num=keyword)
+        elif search_filter == "position":
+            queryset = User.objects.search_by_position(position=keyword)
+        else:
+            raise KeywordNotMatchError()
 
-            paginated = self.paginate_queryset(queryset, self.request, view=self)
-            serializer = ApproveUserSerializer(paginated, many=True)
-
-            return self.get_paginated_response(serializer.data)
-
-        except User.DoesNotExist:
+        if not queryset:
             raise NotFoundError()
+
+        paginated = self.paginate_queryset(queryset, self.request, view=self)
+        serializer = ApproveUserSerializer(paginated, many=True)
+
+        return self.get_paginated_response(serializer.data)
