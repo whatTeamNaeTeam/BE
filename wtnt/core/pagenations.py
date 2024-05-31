@@ -7,4 +7,4 @@ class ListPagenationSize10(PageNumberPagination):
 
 class TeamPagination(CursorPagination):
     page_size = 2
-    ordering = "created_at"
+    ordering = "-created_at"
