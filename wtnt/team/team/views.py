@@ -6,10 +6,6 @@ from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 
 from core.permissions import IsApprovedUser
-from core.pagenations import TeamPagination
-from team.serializers import TeamListSerializer
-from team.utils import createSerializerHelper
-from team.models import Team
 from .service import TeamService
 
 # Create your views here.
@@ -42,23 +38,9 @@ class TeamDetailView(APIView):
         return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
-class TeamListView(APIView, TeamPagination):
+class TeamListView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = TeamListSerializer
 
     def get(self, request):
-        keyword = request.query_params.get("keyword")
-        if keyword == "inprogress":
-            queryset = Team.objects.filter(is_accomplished=False).all()
-        elif keyword == "accomplished":
-            queryset = Team.objects.filter(is_accomplished=True).all()
-        else:
-            return Response({"error": "Keyword Not Matched"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if queryset:
-            paginated = self.paginate_queryset(queryset, request, view=self)
-            serializer = self.serializer_class(paginated, many=True)
-            data = createSerializerHelper.make_responses(serializer.data, request.user.id)
-            return self.get_paginated_response(data)
-        else:
-            return Response({"error": "No Content"}, status=status.HTTP_404_NOT_FOUND)
+        team_service = TeamService(request)
+        return team_service.get_paginated_team_list()
