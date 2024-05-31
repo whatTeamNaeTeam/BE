@@ -1,4 +1,4 @@
-from .exceptions import IsNotOwnerError
+from .exceptions import IsNotOwnerError, IsNotLeaderError
 
 
 class BaseService:
@@ -14,3 +14,9 @@ class BaseServiceWithCheckOwnership(BaseService):
 
         if owner_id != user_id:
             raise IsNotOwnerError()
+
+
+class BaseServiceWithCheckLeader(BaseService):
+    def check_leader(self, user_id, leader_id):
+        if not (user_id == leader_id):
+            raise IsNotLeaderError()

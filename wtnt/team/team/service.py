@@ -1,12 +1,12 @@
-from core.exceptions import SerializerNotValidError, NotFoundError, IsNotLeaderError, KeywordNotMatchError
+from core.exceptions import SerializerNotValidError, NotFoundError, KeywordNotMatchError
 from core.pagenations import TeamPagination
-from core.service import BaseService
+from core.service import BaseServiceWithCheckLeader
 from core.utils.team import S3Utils, RedisTeamUtils, TeamResponse
 from team.models import TeamUser, Team
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 
 
-class TeamService(BaseService, TeamPagination):
+class TeamService(BaseServiceWithCheckLeader, TeamPagination):
     def create_team(self):
         user_id = self.request.user.id
         url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
@@ -58,10 +58,6 @@ class TeamService(BaseService, TeamPagination):
             return serializer.data
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
-    def check_leader(self, user_id, leader_id):
-        if not (user_id == leader_id):
-            raise IsNotLeaderError()
 
     def get_team_detail(self):
         team_id = self.kwargs.get("team_id")
