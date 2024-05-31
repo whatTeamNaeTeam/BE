@@ -1,11 +1,12 @@
-from core.exceptions import SerializerNotValidError, NotFoundError, IsNotLeaderError
+from core.exceptions import SerializerNotValidError, NotFoundError, IsNotLeaderError, KeywordNotMatchError
+from core.pagenations import TeamPagination
 from core.service import BaseService
 from core.utils.team import S3Utils, RedisTeamUtils, TeamResponse
 from team.models import TeamUser, Team
-from team.serializers import TeamCreateSerializer
+from team.serializers import TeamCreateSerializer, TeamListSerializer
 
 
-class TeamService(BaseService):
+class TeamService(BaseService, TeamPagination):
     def create_team(self):
         user_id = self.request.user.id
         url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
@@ -77,4 +78,23 @@ class TeamService(BaseService):
             return TeamResponse.get_detail_response(serializer.data, user_id)
 
         except Team.DoesNotExist:
+            raise NotFoundError()
+
+    def get_paginated_team_list(self):
+        user_id = self.request.user.id
+        keyword = self.request.query_params.get("keyword")
+
+        if keyword == "inprogress":
+            queryset = Team.objects.filter(is_accomplished=False).all()
+        elif keyword == "accomplished":
+            queryset = Team.objects.filter(is_accomplished=True).all()
+        else:
+            raise KeywordNotMatchError()
+
+        if queryset:
+            paginated = self.paginate_queryset(queryset, self.request, view=self)
+            serializer = TeamListSerializer(paginated, many=True)
+            data = TeamResponse.get_team_list_response(serializer.data, user_id)
+            return self.get_paginated_response(data)
+        else:
             raise NotFoundError()
