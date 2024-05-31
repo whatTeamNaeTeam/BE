@@ -7,7 +7,7 @@ from team.models import Team, TeamApply, TeamUser, Likes
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
-from core.utils.team import make_team_list
+from core.utils.team import TeamResponse
 
 User = get_user_model()
 
@@ -114,7 +114,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
                 raise KeywordNotMatchError()
 
         serializer = TeamListSerializer(team_data, many=True)
-        teams = make_team_list(serializer.data, user_id)
+        teams = TeamResponse.get_team_list_response(serializer.data, user_id)
         data = ProfileResponse.make_activity_data(teams, owner_id, user_id)
 
         return data
@@ -125,7 +125,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=like_team_ids)
         serializer = TeamListSerializer(team_data, many=True)
-        data = make_team_list(serializer.data, owner_id)
+        data = TeamResponse.get_team_list_response(serializer.data, owner_id)
 
         return data
 
@@ -138,6 +138,6 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
         team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
         team_data = Team.objects.filter(id__in=team_ids)
         serializer = TeamManageActivitySerializer(team_data, many=True)
-        data = make_team_list(serializer.data, user_id, is_manage=True)
+        data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True)
 
         return data

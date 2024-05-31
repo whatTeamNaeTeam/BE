@@ -1,55 +1,89 @@
 import boto3
 
+from django_redis import get_redis_connection
+
 from team.models import Likes
 import wtnt.settings as settings
 
 
-def make_team_list(team_data, user_id, is_manage=None):
-    if is_manage:
-        for d in team_data:
-            if d["leader_id"] == user_id:
-                d["is_leader"] = True
-    else:
-        team_ids = []
-        for d in team_data:
-            team_ids.append(d["id"])
-
-        likes = is_likes(team_ids, user_id)
-
-        for d, like in zip(team_data, likes):
-            d["is_like"] = like
-
-    return team_data
+client = get_redis_connection()
 
 
-def is_likes(team_ids, user_id):
-    likes = Likes.objects.team_ids(user_id=user_id, team_ids=team_ids)
+class TeamResponse:
+    @staticmethod
+    def get_team_list_response(team_data, user_id, is_manage=None):
+        if is_manage:
+            for d in team_data:
+                if d["leader_id"] == user_id:
+                    d["is_leader"] = True
+        else:
+            team_ids = []
+            for d in team_data:
+                team_ids.append(d["id"])
 
-    result = [False] * len(team_ids)
+            likes = TeamResponse.is_likes(team_ids, user_id)
 
-    likes_dict = {like["team_id"]: like["exists"] for like in likes}
-    for idx, team_id in enumerate(team_ids):
-        result[idx] = likes_dict.get(team_id, False)
+            for d, like in zip(team_data, likes):
+                d["is_like"] = like
 
-    return result
+        return team_data
 
+    @staticmethod
+    def is_likes(team_ids, user_id):
+        likes = Likes.objects.team_ids(user_id=user_id, team_ids=team_ids)
 
-def make_data(leader, strs, image, categories, counts):
-    _dict = {
-        "name": strs.get("name"),
-        "leader_id": leader,
-        "explain": strs.get("explain"),
-        "genre": strs.get("genre"),
-        "image": image,
-        "url": strs.get("urls", "No"),
-        "category": make_tech_data(categories, counts),
-    }
+        result = [False] * len(team_ids)
 
-    return _dict
+        likes_dict = {like["team_id"]: like["exists"] for like in likes}
+        for idx, team_id in enumerate(team_ids):
+            result[idx] = likes_dict.get(team_id, False)
 
+        return result
 
-def make_tech_data(categories, counts):
-    return [{"tech": category, "need_num": count} for category, count in zip(categories, counts)]
+    @staticmethod
+    def is_like(team_id, user_id):
+        try:
+            Likes.objects.get(team_id=team_id, user_id=user_id)
+            return True
+        except Likes.DoesNotExist:
+            return False
+
+    @staticmethod
+    def is_leader(leader_id, user_id):
+        return user_id == leader_id
+
+    @staticmethod
+    def make_data(leader, strs, image, categories, counts):
+        _dict = {
+            "name": strs.get("name"),
+            "leader_id": leader,
+            "explain": strs.get("explain"),
+            "genre": strs.get("genre"),
+            "image": image,
+            "url": strs.get("urls", []),
+            "category": TeamResponse.make_tech_data(categories, counts),
+        }
+
+        return _dict
+
+    @staticmethod
+    def make_tech_data(categories, counts):
+        return [{"tech": category, "need_num": count} for category, count in zip(categories, counts)]
+
+    @staticmethod
+    def get_detail_response(team_data, user_id):
+        url_data = team_data.pop("url")
+        url_data = url_data.split(",") if url_data else []
+        team_data["urls"] = url_data
+
+        leader_id = team_data["leader_id"]
+        team_id = team_data["id"]
+
+        return {
+            "team": team_data,
+            "is_leader": TeamResponse.is_leader(leader_id, user_id),
+            "is_like": TeamResponse.is_like(team_id, user_id),
+        }
 
 
 class S3Utils:
@@ -65,3 +99,9 @@ class S3Utils:
         s3_client.upload_fileobj(image, settings.BUCKET_NAME, root)
 
         return f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{root}"
+
+
+class RedisTeamUtils:
+    @staticmethod
+    def sadd_view_client(team_id, user_id, adress):
+        return client.sadd(f"views:{team_id}", f"{user_id}_{adress}")
