@@ -14,8 +14,8 @@ class TeamResponse:
     def get_team_list_response(team_data, user_id, is_manage=None):
         if is_manage:
             for d in team_data:
-                if d["leader_id"] == user_id:
-                    d["is_leader"] = True
+                if d["leader_info"]["id"] == user_id:
+                    d["leader_info"]["is_leader"] = True
         else:
             team_ids = []
             for d in team_data:
@@ -55,7 +55,7 @@ class TeamResponse:
     @staticmethod
     def make_data(leader, strs, image, categories, counts):
         _dict = {
-            "name": strs.get("name"),
+            "title": strs.get("name"),
             "leader_id": leader,
             "explain": strs.get("explain"),
             "genre": strs.get("genre"),
@@ -76,7 +76,7 @@ class TeamResponse:
         url_data = url_data.split(",") if url_data else []
         team_data["urls"] = url_data
 
-        leader_id = team_data["leader_id"]
+        leader_id = team_data["leader_info"]["id"]
         team_id = team_data["id"]
 
         return {

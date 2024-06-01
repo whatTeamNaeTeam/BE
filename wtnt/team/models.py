@@ -9,7 +9,7 @@ from .manager import LikesManager, TeamManager
 
 class Team(TimestampedModel):
     leader = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    name = models.CharField(max_length=30, unique=True)
+    title = models.CharField(max_length=30, unique=True)
     explain = models.BinaryField()
     genre = models.CharField(max_length=30)
     like = models.IntegerField(default=0)
