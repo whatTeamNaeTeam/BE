@@ -48,3 +48,13 @@ class SerializerNotValidError(APIException):
 class KeywordNotMatchError(APIException):
     status_code = 400
     default_datail = "Keyword Not Matched"
+
+
+class ClosedApplyError(APIException):
+    status_code = 400
+    default_detail = "It's a closed apply"
+
+
+class DuplicatedApplyError(APIException):
+    status_code = 400
+    default_detail = "It's a duplicated apply"
