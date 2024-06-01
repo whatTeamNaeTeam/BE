@@ -74,6 +74,8 @@ class ApplyService(BaseServiceWithCheckLeader):
             teamUser = TeamUser(team_id=team.id, user_id=user_id)
             teamUser.save()
 
+            apply.delete()
+
             return {"detail": "Success to update apply"}
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
