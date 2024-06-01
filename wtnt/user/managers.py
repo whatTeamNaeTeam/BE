@@ -1,4 +1,17 @@
 from django.contrib.auth.models import BaseUserManager
+from django.db import models
+from django.db.models import Q
+
+
+class UserQuerySet(models.QuerySet):
+    def search_by_name(self, name):
+        return self.filter(Q(name__icontains=name), is_approved=True).order_by("student_num")
+
+    def search_by_student_num(self, student_num):
+        return self.filter(Q(student_num__icontains=student_num), is_approved=True).order_by("student_num")
+
+    def search_by_position(self, position):
+        return self.filter(Q(position__icontains=position), is_approved=True).order_by("student_num")
 
 
 class UserManager(BaseUserManager):
@@ -33,3 +46,15 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(email, university, club, student_num, password, image, **extra_fields)
+
+    def get_queryset(self):
+        return UserQuerySet(self.model, using=self._db)
+
+    def search_by_name(self, name):
+        return self.get_queryset().search_by_name(name=name)
+
+    def search_by_student_num(self, student_num):
+        return self.get_queryset().search_by_student_num(student_num=student_num)
+
+    def search_by_position(self, position):
+        return self.get_queryset().search_by_position(position=position)

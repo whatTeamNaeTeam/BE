@@ -11,9 +11,8 @@ class TeamTechCreateSerializer(serializers.ModelSerializer):
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True)
-    leader_id = serializers.IntegerField()
     view = serializers.CharField(read_only=True)
-    leader_name = serializers.SerializerMethodField(read_only=True)
+    leader_info = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
     url = BinaryField()
 
@@ -21,9 +20,8 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         model = Team
         fields = [
             "id",
-            "leader_id",
-            "leader_name",
-            "name",
+            "leader_info",
+            "title",
             "explain",
             "genre",
             "like",
@@ -34,8 +32,8 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "category",
         ]
 
-    def get_leader_name(self, obj):
-        return obj.leader.name
+    def get_leader_info(self, obj):
+        return {"name": obj.leader.name, "id": obj.leader.id}
 
     def create(self, validated_data):
         techs = validated_data.pop("category")
@@ -45,6 +43,30 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             TeamTech.objects.create(team=team, **tech)
 
         return team
+
+    def update(self, instance, validated_data):
+        techs = validated_data.pop("category", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if techs is not None:
+            existing_techs = {tech.tech: tech for tech in instance.category.all()}
+
+            for tech in techs:
+                tech_name = tech.get("tech")
+                if tech_name and tech_name in existing_techs:
+                    tech_instance = existing_techs.pop(tech_name)
+                    for attr, value in tech.items():
+                        setattr(tech_instance, attr, value)
+                    tech_instance.save()
+                else:
+                    TeamTech.objects.create(team=instance, **tech)
+            for tech_instance in existing_techs.values():
+                tech_instance.delete()
+
+        return instance
 
 
 class TeamApplySerializer(serializers.ModelSerializer):
@@ -59,18 +81,14 @@ class TeamApplySerializer(serializers.ModelSerializer):
 
 class TeamListSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
-    leader_name = serializers.SerializerMethodField()
-    leader_id = serializers.SerializerMethodField()
+    leader_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Team
-        fields = ["id", "name", "image", "category", "leader_id", "leader_name", "like", "version", "view", "genre"]
+        fields = ["id", "title", "image", "category", "leader_info", "like", "version", "view", "genre"]
 
-    def get_leader_name(self, obj):
-        return obj.leader.name
-
-    def get_leader_id(self, obj):
-        return obj.leader.id
+    def get_leader_info(self, obj):
+        return {"id": obj.leader.id, "name": obj.leader.name}
 
 
 class TeamLikeSerializer(serializers.ModelSerializer):
@@ -83,15 +101,11 @@ class TeamLikeSerializer(serializers.ModelSerializer):
 
 
 class TeamManageActivitySerializer(serializers.ModelSerializer):
-    leader_id = serializers.SerializerMethodField(read_only=True)
-    leader_name = serializers.SerializerMethodField(read_only=True)
+    leader_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Team
-        fields = ["id", "name", "leader_name", "leader_id"]
+        fields = ["id", "title", "leader_info"]
 
-    def get_leader_name(self, obj):
-        return obj.leader.name
-
-    def get_leader_id(self, obj):
-        return obj.leader.id
+    def get_leader_info(self, obj):
+        return {"id": obj.leader.id, "name": obj.leader.name}
