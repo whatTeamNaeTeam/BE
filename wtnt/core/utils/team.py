@@ -86,6 +86,12 @@ class TeamResponse:
         }
 
 
+class ApplyResponse:
+    @staticmethod
+    def make_data(user_id, team_id, bio, tech):
+        return {"team_id": team_id, "user_id": user_id, "bio": bio, "tech": tech, "is_approved": False}
+
+
 class S3Utils:
     @staticmethod
     def upload_s3(name, image):
