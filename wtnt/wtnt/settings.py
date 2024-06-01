@@ -27,7 +27,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
 SITE_ID = 1
 
@@ -40,7 +40,7 @@ CORS_ALLOW_CREDENTIALS = True
 from corsheaders.defaults import default_headers
 
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-from"]
-
+CSRF_TRUSTED_ORIGINS = ["https://api.whatmeow.shop"]
 AUTH_USER_MODEL = "user.CustomUser"
 
 REST_AUTH = {
@@ -217,7 +217,7 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
-
+STATIC_ROOT = env("STATIC_ROOT")
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -227,9 +227,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 CELERY_RESULT_BACKEND = "django-db"
-# CELERY_ACCEPT_CONTENT = ['application/json']
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = "Asia/Seoul"
 
 # Email Settings
