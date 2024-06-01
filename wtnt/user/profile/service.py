@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from core.service import BaseServiceWithCheckOwnership
 from core.exceptions import NotFoundError, SerializerNotValidError, KeywordNotMatchError
 from user.models import UserUrls, UserTech
-from team.models import Team, TeamApply, TeamUser, Likes
+from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
@@ -141,3 +141,32 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
         data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True)
 
         return data
+
+    def delete_or_leave_team(self):
+        team_id = self.kwargs.get("team_id")
+        user_id = self.request.user.id
+
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            raise NotFoundError()
+
+        if team.leader.id == user_id:
+            team.delete()
+            return {"detail": "Success to delete team"}
+        else:
+            try:
+                team_apply = TeamApply.objects.get(team_id=team_id, user_id=user_id)
+                team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
+                team_tech = TeamTech.objects.get(tech=team_apply.tech, team_id=team_id, user_id=user_id)
+            except TeamApply.DoesNotExist:
+                raise NotFoundError()
+            except TeamUser.DoesNotExist:
+                raise NotFoundError()
+
+            team_apply.delete()
+            team_user.delete()
+            team_tech.current_num -= 1
+            team_tech.save()
+
+            return {"detail": "Success to leave team"}
