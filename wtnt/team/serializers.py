@@ -46,6 +46,30 @@ class TeamCreateSerializer(serializers.ModelSerializer):
 
         return team
 
+    def update(self, instance, validated_data):
+        techs = validated_data.pop("category", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if techs is not None:
+            existing_techs = {tech.tech: tech for tech in instance.category.all()}
+
+            for tech in techs:
+                tech_name = tech.get("tech")
+                if tech_name and tech_name in existing_techs:
+                    tech_instance = existing_techs.pop(tech_name)
+                    for attr, value in tech.items():
+                        setattr(tech_instance, attr, value)
+                    tech_instance.save()
+                else:
+                    TeamTech.objects.create(team=instance, **tech)
+            for tech_instance in existing_techs.values():
+                tech_instance.delete()
+
+        return instance
+
 
 class TeamApplySerializer(serializers.ModelSerializer):
     team_id = serializers.IntegerField()
