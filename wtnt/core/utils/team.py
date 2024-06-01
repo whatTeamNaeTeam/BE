@@ -92,6 +92,12 @@ class ApplyResponse:
         return {"team_id": team_id, "user_id": user_id, "bio": bio, "tech": tech, "is_approved": False}
 
 
+class LikeResponse:
+    @staticmethod
+    def make_data(like_num, is_like, version):
+        return {"like": {"like_count": like_num, "is_like": is_like}, "version": version}
+
+
 class S3Utils:
     @staticmethod
     def upload_s3(name, image):
