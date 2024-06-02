@@ -42,3 +42,9 @@ class S3Utils:
         s3_client.upload_fileobj(image, cls.bucket, root)
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
+
+    @classmethod
+    def delete_user_image_on_s3(cls, id):
+        s3_client = cls.client
+        root = cls.get_user_image_name(id)
+        s3_client.delete_object(Bucket=cls.bucket, Key=root)

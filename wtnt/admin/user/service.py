@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from core.exceptions import NotFoundError, KeywordNotMatchError
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
+from core.utils.s3 import S3Utils
 from admin.serializers import ApproveUserSerializer
 
 User = get_user_model()
@@ -28,6 +29,9 @@ class AdminUserService(BaseService, ListPagenationSize10):
 
     def reject_users(self, status):
         user_ids = [int(id) for id in self.request.data.get("ids").split(",")]
+        if status:
+            for user_id in user_ids:
+                S3Utils.delete_user_image_on_s3(user_id)
         cnt, _ = User.objects.filter(id__in=user_ids, is_approved=status).delete()
         if cnt:
             return {"detail": "Success to reject users"}
