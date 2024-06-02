@@ -1,7 +1,9 @@
 from core.exceptions import SerializerNotValidError, NotFoundError, KeywordNotMatchError
 from core.pagenations import TeamPagination
 from core.service import BaseServiceWithCheckLeader
-from core.utils.team import S3Utils, RedisTeamUtils, TeamResponse
+from core.utils.team import TeamResponse
+from core.utils.redis import RedisUtils
+from core.utils.s3 import S3Utils
 from team.models import TeamUser, Team
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 
@@ -65,7 +67,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         try:
             team = Team.objects.get(id=team_id)
-            redis_ans = RedisTeamUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
+            redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
             if redis_ans:
                 team.view += 1
                 team.save()
