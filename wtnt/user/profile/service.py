@@ -60,7 +60,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            return {"explain": explain, "position": position}
+            return {"explain": explain, "position": position, "image_url": url + "image.jpg"}
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
