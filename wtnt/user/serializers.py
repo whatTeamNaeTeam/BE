@@ -13,9 +13,15 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(BaseUserSerializer):
+    image_url = serializers.SerializerMethodField()
+    image = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
         fields = BaseUserSerializer.Meta.fields + ["image"]
+
+    def get_image_url(self, obj):
+        return obj.image + "image.jpg"
 
 
 class UserProfileSerializer(UserSerializer):
