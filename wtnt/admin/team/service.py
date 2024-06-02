@@ -4,6 +4,7 @@ from admin.serializers import ApproveTeamSerializer
 from core.exceptions import NotFoundError, KeywordNotMatchError
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
+from core.utils.s3 import S3Utils
 from team.models import Team
 
 User = get_user_model()
@@ -29,7 +30,11 @@ class AdminTeamService(BaseService, ListPagenationSize10):
 
     def reject_teams(self, status):
         team_ids = [int(id) for id in self.request.data.get("ids").split(",")]
-        cnt, _ = Team.objects.filter(id__in=team_ids, is_approved=status).delete()
+        teams = Team.objects.filter(id__in=team_ids, is_approved=status)
+        if status:
+            for team in teams:
+                S3Utils.delete_team_image_on_s3(team.title)
+        cnt, _ = teams.delete()
         if cnt:
             return {"detail": "Success to reject teams"}
         else:
