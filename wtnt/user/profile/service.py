@@ -50,8 +50,13 @@ class ProfileService(BaseServiceWithCheckOwnership):
         user = self.request.user
         explain = self.request.data.get("explain")
         position = self.request.data.get("position")
+        image = self.request.FILES.get("image", None)
 
-        serializer = UserProfileSerializer(user, data={"explain": explain, "position": position}, partial=True)
+        url = S3Utils.upload_user_image_on_s3(user.id, image) if image is not None else None
+        data = {"explain": explain, "position": position}
+        if url is not None:
+            data["image"] = url
+        serializer = UserProfileSerializer(user, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
