@@ -30,17 +30,17 @@ class S3Utils:
         return img_io
 
     @staticmethod
-    def get_team_image_name(name):
-        return "team/" + name + "/"
+    def get_team_image_name(id):
+        return "team/" + str(id) + "/"
 
     @staticmethod
     def get_user_image_name(id):
         return "user/" + str(id) + "/"
 
     @classmethod
-    def upload_team_image_on_s3(cls, name, image):
+    def upload_team_image_on_s3(cls, id, image):
         s3_client = cls.client
-        root = cls.get_team_image_name(name)
+        root = cls.get_team_image_name(id)
         thumnail = cls.create_thumnail(image, "team")
         s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
         s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
@@ -48,9 +48,9 @@ class S3Utils:
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
     @classmethod
-    def delete_team_image_on_s3(cls, name):
+    def delete_team_image_on_s3(cls, id):
         s3_client = cls.client
-        root = cls.get_team_image_name(name)
+        root = cls.get_team_image_name(id)
         s3_client.delete_object(Bucket=cls.bucket, Key=root)
 
     @classmethod
