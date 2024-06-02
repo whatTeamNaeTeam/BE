@@ -5,7 +5,7 @@ import wtnt.settings as settings
 
 class S3Utils:
     @staticmethod
-    def upload_s3(name, image):
+    def upload_team_image_on_s3(name, image):
         s3_client = boto3.client(
             "s3",
             aws_access_key_id=settings.AWS_CLIENT_ID,

@@ -11,7 +11,7 @@ from team.serializers import TeamCreateSerializer, TeamListSerializer
 class TeamService(BaseServiceWithCheckLeader, TeamPagination):
     def create_team(self):
         user_id = self.request.user.id
-        url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+        url = S3Utils.upload_team_image_on_s3(self.request.data.get("name"), self.request.FILES.get("image"))
         team_data = TeamResponse.make_data(
             user_id,
             self.request.data,
@@ -42,7 +42,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         self.check_leader(user_id, team.leader.id)
 
         if self.request.FILES.get("image"):
-            url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+            url = S3Utils.upload_team_image_on_s3(self.request.data.get("name"), self.request.FILES.get("image"))
         else:
             url = team.image
 
