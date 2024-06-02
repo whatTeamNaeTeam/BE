@@ -1,9 +1,14 @@
+from PIL import Image
 import boto3
+import io
 
 import wtnt.settings as settings
 
 
 class S3Utils:
+    USER_THUMNAIL = (200, 200)
+    TEAM_THUMNAIL = (320, 180)
+
     client = boto3.client(
         "s3",
         aws_access_key_id=settings.AWS_CLIENT_ID,
@@ -13,19 +18,32 @@ class S3Utils:
     bucket = settings.BUCKET_NAME
     region = settings.AWS_REGION
 
+    @classmethod
+    def create_thumnail(cls, image, category):
+        img = Image.open(image)
+        img.thumbnail(cls.USER_THUMNAIL if category == "user" else cls.TEAM_THUMNAIL)
+
+        img_io = io.BytesIO()
+        img.save(img_io, format="JPEG")
+        img_io.seek(0)
+
+        return img_io
+
     @staticmethod
     def get_team_image_name(name):
-        return "team/" + name + "/image.jpg"
+        return "team/" + name + "/"
 
     @staticmethod
     def get_user_image_name(id):
-        return "user/" + str(id) + "/image.jpg"
+        return "user/" + str(id) + "/"
 
     @classmethod
     def upload_team_image_on_s3(cls, name, image):
         s3_client = cls.client
         root = cls.get_team_image_name(name)
-        s3_client.upload_fileobj(image, cls.bucket, root)
+        thumnail = cls.create_thumnail(image, "team")
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
@@ -39,7 +57,9 @@ class S3Utils:
     def upload_user_image_on_s3(cls, id, image):
         s3_client = cls.client
         root = cls.get_user_image_name(id)
-        s3_client.upload_fileobj(image, cls.bucket, root)
+        thumnail = cls.create_thumnail(image, "user")
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
