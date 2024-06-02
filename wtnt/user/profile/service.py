@@ -8,6 +8,7 @@ from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileS
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
 from core.utils.team import TeamResponse
+from core.utils.s3 import S3Utils
 
 User = get_user_model()
 
@@ -143,7 +144,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
         return data
 
     def delete_or_leave_team(self):
-        team_id = self.kwargs.get("team_id")
+        team_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
         try:
@@ -152,6 +153,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
             raise NotFoundError()
 
         if team.leader.id == user_id:
+            S3Utils.delete_team_image_on_s3(team.title)
             team.delete()
             return {"detail": "Success to delete team"}
         else:
