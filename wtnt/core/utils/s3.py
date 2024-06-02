@@ -24,3 +24,9 @@ class S3Utils:
         s3_client.upload_fileobj(image, cls.bucket, root)
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
+
+    @classmethod
+    def delete_team_image_on_s3(cls, name):
+        s3_client = cls.client
+        root = cls.get_team_image_name(name)
+        s3_client.delete_object(Bucket=cls.bucket, Key=root)
