@@ -22,6 +22,7 @@ class S3Utils:
     @classmethod
     def create_thumnail(cls, image, category):
         img = Image.open(image)
+        img = img.convert("RGB")
         img.thumbnail(cls.USER_THUMNAIL if category == "user" else cls.TEAM_THUMNAIL)
 
         img_io = io.BytesIO()
