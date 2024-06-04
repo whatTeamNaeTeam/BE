@@ -33,18 +33,18 @@ class ProfileService(BaseServiceWithCheckOwnership):
             url = UserUrls.objects.get(user_id=user_id)
             response = UserUrlSerializer(url)
         except UserUrls.DoesNotExist:
-            response = None
+            return None
 
-        return response
+        return ProfileResponse.make_url_data(response.data)
 
     def get_tech_data(self, user_id):
         try:
             tech = UserTech.objects.get(user_id=user_id)
             response = UserTechSerializer(tech)
         except UserTech.DoesNotExist:
-            response = None
+            return None
 
-        return response
+        return ProfileResponse.make_tech_data(response.data)
 
     def update_user_info(self):
         user = self.request.user
@@ -69,12 +69,12 @@ class ProfileService(BaseServiceWithCheckOwnership):
         user_id = self.request.user.id
         url = self.request.data.get("url")
 
-        user_url = UserUrls.objects.get(user_id=user_id)
-        if user_url:
-            serializer = self.serializer_class(user_url, data={"url": url}, partial=True)
-        else:
+        try:
+            user_url = UserUrls.objects.get(user_id=user_id)
+            serializer = UserUrlSerializer(user_url, data={"url": url}, partial=True)
+        except UserUrls.DoesNotExist:
             data = {"user_id": owner_id, "url": url}
-            serializer = self.serializer_class(data=data)
+            serializer = UserUrlSerializer(data=data)
 
         if serializer.is_valid():
             serializer.save()
@@ -88,17 +88,19 @@ class ProfileService(BaseServiceWithCheckOwnership):
         user_id = self.request.user.id
         tech = self.request.data.get("tech")
 
-        user_tech = UserTech.objects.get(user_id=user_id)
-        if user_tech:
-            serializer = self.serializer_class(user_tech, data={"tech": tech}, partial=True)
-        else:
+        try:
+            user_tech = UserTech.objects.get(user_id=user_id)
+            serializer = UserTechSerializer(user_tech, data={"tech": tech}, partial=True)
+        except UserTech.DoesNotExist:
             data = {"user_id": owner_id, "tech": tech}
-            serializer = self.serializer_class(data=data)
+            serializer = UserTechSerializer(data=data)
 
         if serializer.is_valid():
             serializer.save()
             data = ProfileResponse.make_tech_data(serializer.data)
             return data
+
+        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
 
 class MyActivityServcie(BaseServiceWithCheckOwnership):

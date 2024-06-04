@@ -18,7 +18,7 @@ class UserSerializer(BaseUserSerializer):
 
     class Meta:
         model = User
-        fields = BaseUserSerializer.Meta.fields + ["image"]
+        fields = BaseUserSerializer.Meta.fields + ["image", "image_url"]
 
     def get_image_url(self, obj):
         return obj.image + "image.jpg"
