@@ -11,7 +11,7 @@ class TeamTechCreateSerializer(serializers.ModelSerializer):
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True)
-    view = serializers.CharField(read_only=True)
+    view = serializers.IntegerField(read_only=True)
     image = serializers.CharField(write_only=True)
     uuid = serializers.UUIDField(write_only=True)
     leader_id = serializers.IntegerField(write_only=True)
