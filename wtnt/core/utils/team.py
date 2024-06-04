@@ -47,7 +47,7 @@ class TeamResponse:
     @staticmethod
     def make_data(leader, strs, image, categories, counts, uuid):
         _dict = {
-            "title": strs.get("name"),
+            "title": strs.get("title"),
             "leader_id": leader,
             "explain": strs.get("explain"),
             "genre": strs.get("genre"),
