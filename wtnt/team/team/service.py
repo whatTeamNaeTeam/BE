@@ -29,7 +29,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             teamUser = TeamUser(team_id=team.id, user_id=user_id)
             teamUser.save()
 
-            return serializer.data
+            return TeamResponse.get_detail_response(serializer.data, user_id)
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
