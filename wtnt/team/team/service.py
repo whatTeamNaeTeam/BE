@@ -44,7 +44,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         self.check_leader(user_id, team.leader.id)
 
         if self.request.FILES.get("image"):
-            url = S3Utils.upload_team_image_on_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+            url, _ = S3Utils.upload_team_image_on_s3(self.request.FILES.get("image"), id=team.uuid)
         else:
             url = team.image
 
@@ -54,6 +54,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             url,
             self.request.data.getlist("subCategory"),
             self.request.data.getlist("memberCount"),
+            team.uuid,
         )
         serializer = TeamCreateSerializer(team, data=team_data, partial=True)
 
