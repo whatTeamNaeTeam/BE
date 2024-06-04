@@ -45,7 +45,7 @@ class TeamResponse:
         return user_id == leader_id
 
     @staticmethod
-    def make_data(leader, strs, image, categories, counts):
+    def make_data(leader, strs, image, categories, counts, uuid):
         _dict = {
             "title": strs.get("name"),
             "leader_id": leader,
@@ -54,6 +54,7 @@ class TeamResponse:
             "image": image,
             "url": strs.get("urls", []),
             "category": TeamResponse.make_tech_data(categories, counts),
+            "uuid": uuid,
         }
 
         return _dict

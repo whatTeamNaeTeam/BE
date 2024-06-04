@@ -1,6 +1,7 @@
 from PIL import Image
 import boto3
 import io
+import uuid
 
 import wtnt.settings as settings
 
@@ -38,28 +39,34 @@ class S3Utils:
         return "user/" + str(id) + "/"
 
     @classmethod
-    def upload_team_image_on_s3(cls, id, image):
+    def upload_team_image_on_s3(cls, image):
         s3_client = cls.client
-        root = cls.get_team_image_name(id)
+        _uuid = uuid.uuid4()
+        root = cls.get_team_image_name(_uuid)
         thumnail = cls.create_thumnail(image, "team")
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
         s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
 
-        return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
+        image.seek(0)
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+
+        return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}", _uuid
 
     @classmethod
     def delete_team_image_on_s3(cls, id):
         s3_client = cls.client
         root = cls.get_team_image_name(id)
-        s3_client.delete_object(Bucket=cls.bucket, Key=root)
+        s3_client.delete_object(Bucket=cls.bucket, Key=root + "image.jpg")
+        s3_client.delete_object(Bucket=cls.bucket, Key=root + "thumnail.jpg")
 
     @classmethod
     def upload_user_image_on_s3(cls, id, image):
         s3_client = cls.client
         root = cls.get_user_image_name(id)
         thumnail = cls.create_thumnail(image, "user")
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
         s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
+
+        image.seek(0)
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
@@ -67,4 +74,5 @@ class S3Utils:
     def delete_user_image_on_s3(cls, id):
         s3_client = cls.client
         root = cls.get_user_image_name(id)
-        s3_client.delete_object(Bucket=cls.bucket, Key=root)
+        s3_client.delete_object(Bucket=cls.bucket, Key=root + "image.jpg")
+        s3_client.delete_object(Bucket=cls.bucket, Key=root + "thumnail.jpg")

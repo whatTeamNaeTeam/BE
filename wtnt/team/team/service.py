@@ -11,13 +11,15 @@ from team.serializers import TeamCreateSerializer, TeamListSerializer
 class TeamService(BaseServiceWithCheckLeader, TeamPagination):
     def create_team(self):
         user_id = self.request.user.id
-        url = S3Utils.upload_team_image_on_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+        url, uuid = S3Utils.upload_team_image_on_s3(self.request.FILES.get("image"))
+
         team_data = TeamResponse.make_data(
             user_id,
             self.request.data,
             url,
             self.request.data.getlist("subCategory"),
             self.request.data.getlist("memberCount"),
+            uuid,
         )
         serializer = TeamCreateSerializer(data=team_data)
 

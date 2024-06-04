@@ -13,6 +13,8 @@ class TeamCreateSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True)
     view = serializers.CharField(read_only=True)
     image = serializers.CharField(write_only=True)
+    uuid = serializers.UUIDField(write_only=True)
+    leader_id = serializers.IntegerField(write_only=True)
     image_url = serializers.SerializerMethodField()
     leader_info = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
@@ -28,11 +30,13 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "genre",
             "like",
             "version",
+            "leader_id",
             "image_url",
             "image",
             "view",
             "url",
             "category",
+            "uuid",
         ]
 
     def get_leader_info(self, obj):

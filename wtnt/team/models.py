@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 
 from core.models import TimestampedModel
@@ -15,6 +16,7 @@ class Team(TimestampedModel):
     like = models.IntegerField(default=0)
     version = models.IntegerField(default=0)
     view = models.IntegerField(default=0)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     image = models.CharField(max_length=200, null=True)
     url = models.BinaryField(null=True)
     is_approved = models.BooleanField(default=False)
