@@ -60,7 +60,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         if serializer.is_valid():
             serializer.save()
-            return serializer.data
+            return TeamResponse.get_detail_response(serializer.data, user_id)
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
