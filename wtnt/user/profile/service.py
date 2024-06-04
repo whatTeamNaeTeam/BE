@@ -158,7 +158,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
             raise NotFoundError()
 
         if team.leader.id == user_id:
-            S3Utils.delete_team_image_on_s3(team.title)
+            S3Utils.delete_team_image_on_s3(team.uuid)
             team.delete()
             return {"detail": "Success to delete team"}
         else:
