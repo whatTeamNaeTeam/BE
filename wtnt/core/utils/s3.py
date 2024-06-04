@@ -40,9 +40,12 @@ class S3Utils:
         return "user/" + str(id) + "/"
 
     @classmethod
-    def upload_team_image_on_s3(cls, image):
+    def upload_team_image_on_s3(cls, image, id=None):
         s3_client = cls.client
-        _uuid = uuid.uuid4()
+        if id is None:
+            _uuid = uuid.uuid4()
+        else:
+            _uuid = id
         root = cls.get_team_image_name(_uuid)
         thumnail = cls.create_thumnail(image, "team")
         s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
