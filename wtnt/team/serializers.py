@@ -11,7 +11,11 @@ class TeamTechCreateSerializer(serializers.ModelSerializer):
 
 class TeamCreateSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True)
-    view = serializers.CharField(read_only=True)
+    view = serializers.IntegerField(read_only=True)
+    image = serializers.CharField(write_only=True)
+    uuid = serializers.UUIDField(write_only=True)
+    leader_id = serializers.IntegerField(write_only=True)
+    image_url = serializers.SerializerMethodField()
     leader_info = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
     url = BinaryField()
@@ -26,14 +30,20 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "genre",
             "like",
             "version",
+            "leader_id",
+            "image_url",
             "image",
             "view",
             "url",
             "category",
+            "uuid",
         ]
 
     def get_leader_info(self, obj):
-        return {"name": obj.leader.name, "id": obj.leader.id}
+        return {"name": obj.leader.name, "id": obj.leader.id, "image_url": obj.leader.image + "thumnail.jpg"}
+
+    def get_image_url(self, obj):
+        return obj.image + "image.jpg"
 
     def create(self, validated_data):
         techs = validated_data.pop("category")
@@ -82,13 +92,18 @@ class TeamApplySerializer(serializers.ModelSerializer):
 class TeamListSerializer(serializers.ModelSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
     leader_info = serializers.SerializerMethodField(read_only=True)
+    image = serializers.CharField(write_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id", "title", "image", "category", "leader_info", "like", "version", "view", "genre"]
+        fields = ["id", "title", "image", "image_url", "category", "leader_info", "like", "version", "view", "genre"]
 
     def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name}
+        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}
+
+    def get_image_url(self, obj):
+        return obj.image + "thumnail.jpg"
 
 
 class TeamLikeSerializer(serializers.ModelSerializer):
@@ -108,4 +123,4 @@ class TeamManageActivitySerializer(serializers.ModelSerializer):
         fields = ["id", "title", "leader_info"]
 
     def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name}
+        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}

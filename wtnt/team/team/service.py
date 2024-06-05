@@ -1,7 +1,9 @@
 from core.exceptions import SerializerNotValidError, NotFoundError, KeywordNotMatchError
 from core.pagenations import TeamPagination
 from core.service import BaseServiceWithCheckLeader
-from core.utils.team import S3Utils, RedisTeamUtils, TeamResponse
+from core.utils.team import TeamResponse
+from core.utils.redis import RedisUtils
+from core.utils.s3 import S3Utils
 from team.models import TeamUser, Team
 from team.serializers import TeamCreateSerializer, TeamListSerializer
 
@@ -9,13 +11,15 @@ from team.serializers import TeamCreateSerializer, TeamListSerializer
 class TeamService(BaseServiceWithCheckLeader, TeamPagination):
     def create_team(self):
         user_id = self.request.user.id
-        url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+        url, uuid = S3Utils.upload_team_image_on_s3(self.request.FILES.get("image"))
+
         team_data = TeamResponse.make_data(
             user_id,
             self.request.data,
             url,
             self.request.data.getlist("subCategory"),
             self.request.data.getlist("memberCount"),
+            uuid,
         )
         serializer = TeamCreateSerializer(data=team_data)
 
@@ -25,7 +29,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             teamUser = TeamUser(team_id=team.id, user_id=user_id)
             teamUser.save()
 
-            return serializer.data
+            return TeamResponse.get_detail_response(serializer.data, user_id)
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
@@ -40,7 +44,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         self.check_leader(user_id, team.leader.id)
 
         if self.request.FILES.get("image"):
-            url = S3Utils.upload_s3(self.request.data.get("name"), self.request.FILES.get("image"))
+            url, _ = S3Utils.upload_team_image_on_s3(self.request.FILES.get("image"), id=team.uuid)
         else:
             url = team.image
 
@@ -50,12 +54,13 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             url,
             self.request.data.getlist("subCategory"),
             self.request.data.getlist("memberCount"),
+            team.uuid,
         )
         serializer = TeamCreateSerializer(team, data=team_data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-            return serializer.data
+            return TeamResponse.get_detail_response(serializer.data, user_id)
 
         raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
@@ -65,7 +70,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         try:
             team = Team.objects.get(id=team_id)
-            redis_ans = RedisTeamUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
+            redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
             if redis_ans:
                 team.view += 1
                 team.save()

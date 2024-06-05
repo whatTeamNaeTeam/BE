@@ -65,8 +65,5 @@ class VersionError(APIException):
     default_detail = "Version Not Matched"
 
     def __init__(self, current_version):
-        self.current_version = current_version
+        self.default_detail = {"detail": self.default_detail, "version": current_version}
         super().__init__(detail=self.default_detail, code=self.default_code)
-
-    def get_full_details(self):
-        return {"detail": self.detail, "version": self.current_version}
