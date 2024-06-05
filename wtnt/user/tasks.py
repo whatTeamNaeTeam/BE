@@ -9,12 +9,12 @@ from wtnt.celery import app
 client = get_redis_connection("default")
 
 
-def make_random_code_for_register(self):
+def make_random_code_for_register():
     digit_and_alpha = string.ascii_letters + string.digits
     return "".join(secrets.choice(digit_and_alpha) for _ in range(6))
 
 
-def get_template(self, code):
+def get_template(code):
     return """
             <table cellpadding="0" cellspacing="0" border="0" style="width:500px;padding-top:60px">
                 <tbody>
