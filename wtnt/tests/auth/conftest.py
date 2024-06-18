@@ -52,3 +52,9 @@ def initial_socialaccount(initial_user):
         extra_data={"id": 123456, "login": "testuser", "avatar_url": "testimage/"},
         user_id=1,
     )
+
+
+@pytest.fixture
+def setup_email_code(mock_redis):
+    mock_redis.set("testuser@gmail.com", "test")
+    yield mock_redis
