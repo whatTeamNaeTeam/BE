@@ -28,7 +28,7 @@ class AuthService(BaseService):
         user_id = response_data["user"]["pk"]
 
         if refresh_token:
-            RedisUtils.set_refresh_token_in_cache(user_id, refresh_token)
+            RedisUtils.set_refresh_token(user_id, refresh_token)
             response_data.pop("refresh")
 
         _, email = response_data["user"]["email"].split("@")
@@ -49,7 +49,8 @@ class RegisterService(BaseService):
     def finish_register_by_user_input(self):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
-        if code != RedisUtils.get_code_in_redis_from_email():
+
+        if code != RedisUtils.get_code_in_redis_from_email(email):
             raise CodeNotMatchError()
 
         extra_data = SocialAccount.objects.get(user_id=self.request.user.id).extra_data
@@ -66,7 +67,7 @@ class RefreshService(BaseService):
         _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
         user_id = AccessToken(access_token, verify=False).payload.get("user_id")
 
-        refresh_token = RedisUtils.get_refresh_token_in_cache(user_id)
+        refresh_token = RedisUtils.get_refresh_token(user_id)
         if not refresh_token:
             raise RefreshTokenExpiredError()
 
