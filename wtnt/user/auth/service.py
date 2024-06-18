@@ -3,11 +3,11 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
-from core.utils.auth import get_user_info
 from core.utils.redis import RedisUtils
 from core.service import BaseService
 from core.exceptions import CodeNotMatchError, RefreshTokenExpiredError, CeleryTaskError
 from user.tasks import send_email
+from user.serializers import UserSerializer
 
 User = get_user_model()
 
@@ -39,7 +39,7 @@ class AuthService(BaseService):
         else:
             response_data["registered"] = True
             user = User.objects.get(id=user_id)
-            response_data["user"] = get_user_info(user)
+            response_data["user"] = UserSerializer(user).data
 
         response_data.pop("access")
         return response_data, access_token
@@ -59,7 +59,7 @@ class RegisterService(BaseService):
 
         RedisUtils.delete_code_in_redis_from_email(email)
 
-        return user
+        return UserSerializer(user).data
 
 
 class RefreshService(BaseService):
