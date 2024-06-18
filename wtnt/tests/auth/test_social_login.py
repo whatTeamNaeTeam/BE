@@ -6,10 +6,11 @@ from rest_framework import status
 @pytest.mark.django_db
 class TestSocialLogin:
     @pytest.fixture(autouse=True)
-    def setup(self, api_client, social_app, github_mock):
+    def setup(self, api_client, social_app, github_mock, mock_redis):
         self.api_client = api_client
         self.social_app = social_app
         self.github_mock = github_mock
+        self.mock_redis = mock_redis
 
     def test_github_initial_register(self):
         url = reverse("github-login")
@@ -21,3 +22,24 @@ class TestSocialLogin:
 
         assert "registered" in response_data
         assert "user" not in response_data
+
+    def test_github_finish(self, initial_user, initial_socialaccount, setup_email_code):
+        url = reverse("github-finish")
+        data = {
+            "email": "testuser@gmail.com",
+            "student_num": "111111111",
+            "name": "test",
+            "position": "test",
+            "code": "test",
+        }
+        assert "test" == self.mock_redis.get("testuser@gmail.com").decode()
+        self.api_client.force_authenticate(user=initial_user)
+        response = self.api_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+
+        responsed_user_data = response.data["user"]
+
+        assert "test" == responsed_user_data["name"]
+        assert "111111111" == responsed_user_data["student_num"]
+        assert 1 == responsed_user_data["id"]
+        assert self.mock_redis.get("testuser@gmail.com") is None
