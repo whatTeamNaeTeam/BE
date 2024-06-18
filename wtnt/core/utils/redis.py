@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
-
-from django.core.cache import cache
+from datetime import timedelta
 from django_redis import get_redis_connection
 
 
@@ -18,13 +16,15 @@ class RedisUtils:
         return cls.client.sadd(f"views:{team_id}", f"{user_id}_{adress}")
 
     @classmethod
-    def set_refresh_token_in_cache(cls, user_id, refresh_token):
-        cache.set(user_id, refresh_token)
-        cache.expire_at(user_id, datetime.now() + timedelta(days=7))
+    def set_refresh_token(cls, user_id, refresh_token):
+        RedisUtils.init()
+        ttl_seconds = timedelta(days=7).total_seconds()
+        cls.client.setex(user_id, int(ttl_seconds), refresh_token)
 
     @classmethod
-    def get_refresh_token_in_cache(cls, user_id):
-        return cache.get(user_id)
+    def get_refresh_token(cls, user_id):
+        RedisUtils.init()
+        return cls.client.get(user_id).decode()
 
     @classmethod
     def set_code_in_redis_from_email(cls, email, code):
