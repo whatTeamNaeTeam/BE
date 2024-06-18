@@ -1,6 +1,11 @@
 import pytest
 import requests_mock
 
+from django.contrib.auth import get_user_model
+from allauth.socialaccount.models import SocialAccount
+
+user = get_user_model()
+
 
 @pytest.fixture
 def github_mock():
@@ -23,3 +28,27 @@ def github_mock():
             },
         )
         yield m
+
+
+@pytest.fixture
+def initial_user():
+    User = user.objects.create(
+        id=1,
+        name="test",
+        email="testuser@sample.com",
+        image="testimage",
+    )
+
+    return User
+
+
+@pytest.fixture
+def initial_socialaccount(initial_user):
+    SocialAccount.objects.create(
+        id=1,
+        provider="github",
+        last_login=None,
+        date_joined=None,
+        extra_data={"id": 123456, "login": "testuser", "avatar_url": "testimage/"},
+        user_id=1,
+    )
