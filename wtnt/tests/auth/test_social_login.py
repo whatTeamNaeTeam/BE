@@ -16,12 +16,24 @@ class TestSocialLogin:
         url = reverse("github-login")
         data = {"access_token": "fake-access-token"}
         response = self.api_client.post(url, data, format="json")
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]
+        assert response.status_code == status.HTTP_200_OK
 
         response_data = response.data
 
         assert "registered" in response_data
+        assert not response_data["registered"]
         assert "user" not in response_data
+
+    def test_github_login(self, registered_user):
+        url = reverse("github-login")
+        data = {"access_token": "fake-access-token"}
+        response = self.api_client.post(url, data, foramt="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        response_data = response.data
+
+        assert response_data["registered"]
+        assert response_data["user"]["name"] == "test"
 
     def test_github_finish(self, initial_user, initial_socialaccount, setup_email_code):
         url = reverse("github-finish")
