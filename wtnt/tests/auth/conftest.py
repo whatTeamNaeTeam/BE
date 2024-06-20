@@ -32,12 +32,7 @@ def github_mock():
 
 @pytest.fixture
 def initial_user():
-    User = user.objects.create(
-        id=1,
-        name="test",
-        email="testuser@sample.com",
-        image="testimage",
-    )
+    User = user.objects.create(id=1, name="test", email="testuser@sample.com", image="testimage", password="testpw")
 
     return User
 
