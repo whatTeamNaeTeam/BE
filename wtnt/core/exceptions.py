@@ -1,4 +1,7 @@
+from rest_framework import status
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 
 class IsNotLeaderError(APIException):
@@ -67,3 +70,32 @@ class VersionError(APIException):
     def __init__(self, current_version):
         self.default_detail = {"detail": self.default_detail, "version": current_version}
         super().__init__(detail=self.default_detail, code=self.default_code)
+
+
+class Custom400Error(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class Custom500Error(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+
+    if response is None:
+        response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    if isinstance(exc, Custom400Error):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        response.data = {"detail": str(exc)}
+
+    if isinstance(exc, Custom500Error):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        response.data = {"detail": str(exc)}
+
+    return response
