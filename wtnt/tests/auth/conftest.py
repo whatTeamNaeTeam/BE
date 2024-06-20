@@ -23,7 +23,7 @@ def github_mock():
             json={
                 "id": 123456,
                 "login": "testuser",
-                "name": "testuser",
+                "name": "test",
                 "avatar_url": "https://avatars.githubusercontent.com/u/123456?v=4",
             },
         )
@@ -33,6 +33,22 @@ def github_mock():
 @pytest.fixture
 def initial_user():
     User = user.objects.create(id=1, name="test", email="testuser@sample.com", image="testimage", password="testpw")
+
+    return User
+
+
+@pytest.fixture
+def registered_user():
+    User = user.objects.create(id=1, name="test", email="testuser@gmail.com", image="testimage/", password="testpw")
+    SocialAccount.objects.create(
+        id=1,
+        provider="github",
+        uid=123456,
+        last_login=None,
+        date_joined=None,
+        extra_data={"id": 123456, "login": "testuser", "avatar_url": "testimage/"},
+        user_id=1,
+    )
 
     return User
 
