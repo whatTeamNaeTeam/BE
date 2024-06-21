@@ -3,6 +3,7 @@ import requests_mock
 
 from django.contrib.auth import get_user_model
 from allauth.socialaccount.models import SocialAccount
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 user = get_user_model()
 
@@ -69,3 +70,13 @@ def initial_socialaccount(initial_user):
 def setup_email_code(mock_redis):
     mock_redis.set("testuser@gmail.com", "test")
     yield mock_redis
+
+
+@pytest.fixture
+def access_token(registered_user):
+    return AccessToken.for_user(registered_user)
+
+
+@pytest.fixture
+def refresh_token(registered_user):
+    return RefreshToken.for_user(registered_user)
