@@ -24,7 +24,7 @@ class RedisUtils:
     @classmethod
     def get_refresh_token(cls, user_id):
         RedisUtils.init()
-        return cls.client.get(user_id).decode()
+        return cls.client.get(user_id)
 
     @classmethod
     def set_code_in_redis_from_email(cls, email, code):
@@ -34,7 +34,7 @@ class RedisUtils:
     @classmethod
     def get_code_in_redis_from_email(cls, email):
         RedisUtils.init()
-        return cls.client.get(email).decode()
+        return cls.client.get(email)
 
     @classmethod
     def delete_code_in_redis_from_email(cls, email):

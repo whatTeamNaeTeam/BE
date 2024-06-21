@@ -49,8 +49,8 @@ class RegisterService(BaseService):
     def finish_register_by_user_input(self):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
-
-        if code != RedisUtils.get_code_in_redis_from_email(email):
+        code_from_redis = RedisUtils.get_code_in_redis_from_email(email)
+        if code_from_redis is not None and code != code_from_redis.decode():
             raise CodeNotMatchError()
 
         extra_data = SocialAccount.objects.get(user_id=self.request.user.id).extra_data
@@ -71,7 +71,7 @@ class RefreshService(BaseService):
         if not refresh_token:
             raise RefreshTokenExpiredError()
 
-        return refresh_token
+        return refresh_token.decode()
 
     def get_new_access_token_from_serializer(self, serializer):
         try:
