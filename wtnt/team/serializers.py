@@ -3,20 +3,30 @@ from .models import Team, TeamTech, TeamApply, Likes
 from core.fields import BinaryField
 
 
+class LeaderInfoIncludedSerializer(serializers.ModelSerializer):
+    leader_info = serializers.SerializerMethodField(read_only=True)
+
+    def get_leader_info(self, obj):
+        return {
+            "name": obj.leader.name,
+            "id": obj.leader.id,
+            "image_url": obj.leader.image if "github" in obj.leader.image else obj.leader.image + "thumnail.jpg",
+        }
+
+
 class TeamTechCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamTech
         fields = ["id", "tech", "need_num", "current_num"]
 
 
-class TeamCreateSerializer(serializers.ModelSerializer):
+class TeamCreateSerializer(LeaderInfoIncludedSerializer):
     category = TeamTechCreateSerializer(many=True)
     view = serializers.IntegerField(read_only=True)
     image = serializers.CharField(write_only=True)
     uuid = serializers.UUIDField(write_only=True)
     leader_id = serializers.IntegerField(write_only=True)
     image_url = serializers.SerializerMethodField()
-    leader_info = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
     url = BinaryField()
 
@@ -38,9 +48,6 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "category",
             "uuid",
         ]
-
-    def get_leader_info(self, obj):
-        return {"name": obj.leader.name, "id": obj.leader.id, "image_url": obj.leader.image + "thumnail.jpg"}
 
     def get_image_url(self, obj):
         return obj.image + "image.jpg"
@@ -89,18 +96,14 @@ class TeamApplySerializer(serializers.ModelSerializer):
         fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
 
 
-class TeamListSerializer(serializers.ModelSerializer):
+class TeamListSerializer(LeaderInfoIncludedSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
-    leader_info = serializers.SerializerMethodField(read_only=True)
     image = serializers.CharField(write_only=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
         fields = ["id", "title", "image", "image_url", "category", "leader_info", "like", "version", "view", "genre"]
-
-    def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}
 
     def get_image_url(self, obj):
         return obj.image + "thumnail.jpg"
@@ -115,12 +118,7 @@ class TeamLikeSerializer(serializers.ModelSerializer):
         fields = ["user_id", "team_id"]
 
 
-class TeamManageActivitySerializer(serializers.ModelSerializer):
-    leader_info = serializers.SerializerMethodField(read_only=True)
-
+class TeamManageActivitySerializer(LeaderInfoIncludedSerializer):
     class Meta:
         model = Team
         fields = ["id", "title", "leader_info"]
-
-    def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}

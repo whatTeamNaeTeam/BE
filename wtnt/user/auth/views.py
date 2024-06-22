@@ -64,10 +64,9 @@ class FinishGithubLoginView(APIView):
 
     def post(self, request):
         register_service = RegisterService(request)
-        user = register_service.finish_register_by_user_input()
-        serializer = self.serializer_class(user)
+        data = register_service.finish_register_by_user_input()
 
-        return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"user": data}, status=status.HTTP_201_CREATED)
 
 
 class WtntTokenRefreshView(TokenRefreshView):

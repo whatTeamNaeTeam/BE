@@ -6,7 +6,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("manage", TeamManageView.as_view()),
-    path("list", TeamDeleteView.as_view()),
-    path("search", TeamSearchView.as_view()),
+    path("manage", TeamManageView.as_view(), name="admin-team-manage"),
+    path("list", TeamDeleteView.as_view(), name="admin-team-list"),
+    path("search", TeamSearchView.as_view(), name="admin-team-search"),
 ]

@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.db import models
+from django.db import models, IntegrityError, DataError
+from django.core.exceptions import ValidationError
+
 from .managers import UserManager
+from core.exceptions import Custom400Error, Custom500Error
 from core.models import TimestampedModel
 
 
@@ -13,7 +16,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     name = models.CharField(max_length=5)
     university = models.CharField(max_length=8, default="부경대학교")
     club = models.CharField(max_length=10, default="WAP")
-    student_num = models.CharField(max_length=20, null=True)
+    student_num = models.PositiveIntegerField(null=True)
     position = models.CharField(max_length=15, null=True)
     explain = models.CharField(max_length=500, default="열심히 하겠습니다!")
     image = models.CharField(max_length=200, null=True)
@@ -35,14 +38,23 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
         return True
 
     def finish_register(self, extra_data, request_data, *args, **kwargs):
-        self.student_num = str(request_data.get("student_num"))
-        self.name = request_data.get("name")
-        self.social_id = extra_data.get("id")
-        self.email = extra_data.get("login") + "@github.com"
-        self.image = extra_data.get("avatar_url")
-        self.position = request_data.get("position")
-
-        super().save(*args, **kwargs)
+        try:
+            self.student_num = str(request_data.get("student_num"))
+            self.name = request_data.get("name")
+            self.social_id = extra_data.get("id")
+            self.email = extra_data.get("login") + "@github.com"
+            self.image = extra_data.get("avatar_url")
+            self.position = request_data.get("position")
+            self.full_clean()
+            super().save(*args, **kwargs)
+        except IntegrityError as e:
+            raise Custom400Error(f"IntergrityError: {e}")
+        except ValidationError as e:
+            raise Custom400Error(f"ValidationError: {e}")
+        except DataError as e:
+            raise Custom400Error(f"DataError: {e}")
+        except Exception as e:
+            raise Custom500Error(f"Unexpected Error: {e}")
 
 
 class UserUrls(models.Model):

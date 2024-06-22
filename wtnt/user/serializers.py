@@ -21,7 +21,10 @@ class UserSerializer(BaseUserSerializer):
         fields = BaseUserSerializer.Meta.fields + ["image", "image_url"]
 
     def get_image_url(self, obj):
-        return obj.image + "image.jpg"
+        if "github" not in obj.image:
+            return obj.image + "image.jpg"
+        else:
+            return obj.image
 
 
 class UserProfileSerializer(UserSerializer):
