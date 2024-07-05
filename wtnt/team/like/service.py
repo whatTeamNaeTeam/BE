@@ -20,7 +20,7 @@ class LikeService(BaseService):
                 team.version += 1
                 team.save()
 
-                return LikeResponse.make_data(team.like, False, version)
+                return LikeResponse.make_data(team.like, False, team.version)
 
             raise VersionError(current_version=team.version)
 
@@ -36,7 +36,7 @@ class LikeService(BaseService):
                     team.version += 1
                     team.save()
 
-                    return LikeResponse.make_data(team.like, True, version)
+                    return LikeResponse.make_data(team.like, True, team.version)
 
                 raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
