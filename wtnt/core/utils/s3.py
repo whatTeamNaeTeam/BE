@@ -18,6 +18,7 @@ class S3Utils:
     )
     bucket = settings.BUCKET_NAME
     region = settings.AWS_REGION
+    extra_args = {"ContentType": "image/jpeg", "ContentDisposition": "inline"}
 
     @classmethod
     def create_thumnail(cls, image, category):
@@ -52,10 +53,10 @@ class S3Utils:
 
         root = cls.get_team_image_name(_uuid)
         thumnail = cls.create_thumnail(image, "team")
-        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
+        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg", ExtraArgs=cls.extra_args)
 
         image.seek(0)
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg", ExtraArgs=cls.extra_args)
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}", _uuid
 
@@ -71,10 +72,10 @@ class S3Utils:
         s3_client = cls.client
         root = cls.get_user_image_name(id)
         thumnail = cls.create_thumnail(image, "user")
-        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
+        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg", ExtraArgs=cls.extra_args)
 
         image.seek(0)
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg", ExtraArgs=cls.extra_args)
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
