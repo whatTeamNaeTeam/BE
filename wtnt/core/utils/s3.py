@@ -46,6 +46,10 @@ class S3Utils:
             _uuid = uuid.uuid4()
         else:
             _uuid = id
+
+        if image is None:
+            return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/default/", _uuid
+
         root = cls.get_team_image_name(_uuid)
         thumnail = cls.create_thumnail(image, "team")
         s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
