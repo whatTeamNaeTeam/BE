@@ -5,7 +5,8 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 from core.utils.redis import RedisUtils
 from core.service import BaseService
-from core.exceptions import CodeNotMatchError, RefreshTokenExpiredError, CeleryTaskError
+import core.exception.login as login_exception
+from core.exceptions import RefreshTokenExpiredError, CeleryTaskError
 from user.tasks import send_email
 from user.serializers import UserSerializer
 
@@ -50,8 +51,9 @@ class RegisterService(BaseService):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
         code_from_redis = RedisUtils.get_code_in_redis_from_email(email)
-        if code_from_redis is not None and code != code_from_redis.decode():
-            raise CodeNotMatchError()
+
+        if code_from_redis is None or code != code_from_redis.decode():
+            raise login_exception.EmailCodeNotMatchAfterAuthError()
 
         extra_data = SocialAccount.objects.get(user_id=self.request.user.id).extra_data
         user = User.objects.get(id=self.request.user.id)
@@ -96,9 +98,13 @@ class EmailVerifyService(BaseService):
     def check_code(self):
         code = self.request.data.get("code")
         email = self.request.data.get("email")
+        code_from_redis = RedisUtils.get_code_in_redis_from_email(email)
 
-        if code == RedisUtils.get_code_in_redis_from_email(email):
+        if code_from_redis is None:
+            raise login_exception.EmailTimeoutError()
+
+        if code == code_from_redis.decode():
             RedisUtils.set_code_in_redis_from_email(email, code)
             return code
 
-        raise CodeNotMatchError()
+        raise login_exception.EmailCodeNotMatchError()
