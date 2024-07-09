@@ -22,11 +22,11 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         if len(parts) == 0:
             # Empty AUTHORIZATION header sent
-            return None
+            raise exception.NoTokenInAuthorizationHeaderError()
 
         if parts[0] not in AUTH_HEADER_TYPE_BYTES:
             # Assume the header does not contain a JSON web token
-            return None
+            raise exception.NoTokenInAuthorizationHeaderError()
 
         if len(parts) != 2:
             raise exception.AuthenticationHeaderSpaceError()

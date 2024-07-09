@@ -25,5 +25,9 @@ class UserInactiveInTokenDataError(AuthenticationFailed):
     default_detail = {"message": "토큰 속 유저가 Inactive 상태입니다.", "code": "0405"}
 
 
+class NoTokenInAuthorizationHeaderError(AuthenticationFailed):
+    default_detail = {"message": "자격 증명이 주어지지 않았습니다.", "code": "0406"}
+
+
 class RefreshTokenExpiredError(AuthenticationFailed):
     default_detail = {"message": "리프레쉬 토큰이 만료되었습니다.", "code": "0410"}
