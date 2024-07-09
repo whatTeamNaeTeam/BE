@@ -39,3 +39,12 @@ class TeamImageTypeError(APIException):
 class TeamKeywordNotMatchError(APIException):
     status_code = 400
     default_detail = {"message": "검색에 필요한 키워드가 아닙니다.", "code": "0260"}
+
+
+class TeamLikeVersionError(APIException):
+    status_code = 400
+    default_detail = {"message": "좋아요에 필요한 버전이 일치하지 않습니다", "code": "0270"}
+
+    def __init__(self, current_version):
+        self.default_detail = {"detail": self.default_detail, "version": current_version}
+        super().__init__(detail=self.default_detail, code=self.default_code)

@@ -1,4 +1,5 @@
-from core.exceptions import NotFoundError, VersionError, SerializerNotValidError
+import core.exception.notfound as notfound_exception
+import core.exception.team as team_exception
 from core.service import BaseService
 from core.utils.team import LikeResponse
 from team.models import Likes, Team
@@ -22,10 +23,10 @@ class LikeService(BaseService):
 
                 return LikeResponse.make_data(team.like, False, team.version)
 
-            raise VersionError(current_version=team.version)
+            raise team_exception.TeamLikeVersionError(current_version=team.version)
 
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
         except Likes.DoesNotExist:
             if version == team.version:
@@ -38,6 +39,4 @@ class LikeService(BaseService):
 
                     return LikeResponse.make_data(team.like, True, team.version)
 
-                raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
-            raise VersionError(current_version=team.version)
+            raise team_exception.TeamLikeVersionError(current_version=team.version)
