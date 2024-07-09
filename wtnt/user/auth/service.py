@@ -6,7 +6,8 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from core.utils.redis import RedisUtils
 from core.service import BaseService
 import core.exception.login as login_exception
-from core.exceptions import RefreshTokenExpiredError, CeleryTaskError
+import core.exception.token as token_exception
+from core.exceptions import CeleryTaskError
 from user.tasks import send_email
 from user.serializers import UserSerializer
 
@@ -67,11 +68,14 @@ class RegisterService(BaseService):
 class RefreshService(BaseService):
     def extract_refresh_token(self):
         _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
-        user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+        try:
+            user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+        except TokenError:
+            raise token_exception.InvalidTokenError()
 
         refresh_token = RedisUtils.get_refresh_token(user_id)
         if not refresh_token:
-            raise RefreshTokenExpiredError()
+            raise token_exception.RefreshTokenExpiredError()
 
         return refresh_token.decode()
 
