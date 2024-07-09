@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Team, TeamTech, TeamApply, Likes
 from core.fields import BinaryField
+import core.exception.team as exception
 
 
 class LeaderInfoIncludedSerializer(serializers.ModelSerializer):
@@ -51,6 +52,35 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
 
     def get_image_url(self, obj):
         return obj.image + "image.jpg"
+
+    from rest_framework.fields import empty
+
+    def run_validation(self, data=empty):
+        (is_empty_value, data) = self.validate_empty_values(data)
+        if is_empty_value:
+            return data
+
+        team_data = {key: value for key, value in data.items() if key != "category"}
+        instance = Team(**team_data)
+        instance.clean()
+
+        value = self.to_internal_value(data)
+        self.run_validators(value)
+        value = self.validate(value)
+
+        return value
+
+    def validate(self, data):
+        url = data.get("url", None)
+        explain = data.get("explain", None)
+
+        if explain is not None and not (0 < len(explain.decode()) <= 2000):
+            raise exception.TeamExplainLengthError()
+
+        if url is not None and len(url.decode()) == 0:
+            raise exception.TeamUrlLengthError()
+
+        return data
 
     def create(self, validated_data):
         techs = validated_data.pop("category")

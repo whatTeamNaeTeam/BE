@@ -1,4 +1,5 @@
-from core.exceptions import SerializerNotValidError, NotFoundError, KeywordNotMatchError
+import core.exception.team as team_exception
+import core.exception.notfound as notfound_exception
 from core.pagenations import TeamPagination
 from core.service import BaseServiceWithCheckLeader
 from core.utils.team import TeamResponse
@@ -30,8 +31,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             teamUser.save()
 
             return TeamResponse.get_detail_response(serializer.data, user_id)
-
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
+        print("말도안돼 왜 validation 통과 못함?")
 
     def update_team(self):
         user_id = self.request.user.id
@@ -40,7 +40,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         try:
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
 
         if self.request.FILES.get("image", None):
@@ -62,8 +62,6 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             serializer.save()
             return TeamResponse.get_detail_response(serializer.data, user_id)
 
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
     def get_team_detail(self):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id if self.request.user.id else None
@@ -79,7 +77,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             return TeamResponse.get_detail_response(serializer.data, user_id)
 
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
     def get_paginated_team_list(self):
         user_id = self.request.user.id
@@ -90,7 +88,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         elif keyword == "accomplished":
             queryset = Team.objects.filter(is_accomplished=True).all()
         else:
-            raise KeywordNotMatchError()
+            raise team_exception.TeamKeywordNotMatchError()
 
         if queryset:
             paginated = self.paginate_queryset(queryset, self.request, view=self)
@@ -98,4 +96,4 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             data = TeamResponse.get_team_list_response(serializer.data, user_id)
             return self.get_paginated_response(data)
         else:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
