@@ -59,7 +59,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, TimestampedModel):
         if not (7 <= len(str(self.student_num)) <= 10):
             raise exception.StudentNumTooLongError()
 
-        if CustomUser.objects.filter(student_num=self.student_num).exists():
+        if CustomUser.objects.filter(student_num=self.student_num).exclude(pk=self.pk).exists():
             raise exception.StudentNumDuplicatedError()
 
         valid_positions = ["백엔드", "프론트엔드", "AI", "디자이너"]
