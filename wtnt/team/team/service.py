@@ -84,9 +84,9 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         keyword = self.request.query_params.get("keyword")
 
         if keyword == "inprogress":
-            queryset = Team.objects.filter(is_accomplished=False).all()
+            queryset = Team.objects.filter(is_accomplished=False, is_approved=True).all()
         elif keyword == "accomplished":
-            queryset = Team.objects.filter(is_accomplished=True).all()
+            queryset = Team.objects.filter(is_accomplished=True, is_approved=True).all()
         else:
             raise team_exception.TeamKeywordNotMatchError()
 
