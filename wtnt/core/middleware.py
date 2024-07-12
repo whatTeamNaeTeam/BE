@@ -40,4 +40,5 @@ class AttachJWTFromCookieToHeaderMiddleware(MiddlewareMixin):
 
         if not is_valid:
             if request.META.get("HTTP_X_FROM", None) == "web":
-                request.META["HTTP_AUTHORIZATION"] = f"Bearer {request.COOKIES.get('access', None)}"
+                if request.COOKIES.get("access"):
+                    request.META["HTTP_AUTHORIZATION"] = f"Bearer {request.COOKIES.get('access', None)}"
