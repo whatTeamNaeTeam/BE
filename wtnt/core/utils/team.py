@@ -52,10 +52,12 @@ class TeamResponse:
             "explain": strs.get("explain"),
             "genre": strs.get("genre"),
             "image": image,
-            "url": strs.get("urls", []),
             "category": TeamResponse.make_tech_data(categories, counts),
             "uuid": uuid,
         }
+
+        if "urls" in strs:
+            _dict["url"] = strs["urls"]
 
         return _dict
 
