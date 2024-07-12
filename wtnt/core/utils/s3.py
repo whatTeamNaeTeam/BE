@@ -1,8 +1,9 @@
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import boto3
 import io
 import uuid
 
+import core.exception.team as exception
 import wtnt.settings as settings
 
 
@@ -18,6 +19,7 @@ class S3Utils:
     )
     bucket = settings.BUCKET_NAME
     region = settings.AWS_REGION
+    extra_args = {"ContentType": "image/jpeg", "ContentDisposition": "inline"}
 
     @classmethod
     def create_thumnail(cls, image, category):
@@ -46,12 +48,19 @@ class S3Utils:
             _uuid = uuid.uuid4()
         else:
             _uuid = id
-        root = cls.get_team_image_name(_uuid)
-        thumnail = cls.create_thumnail(image, "team")
-        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
 
-        image.seek(0)
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+        if image is None:
+            return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/default/", _uuid
+
+        root = cls.get_team_image_name(_uuid)
+        try:
+            thumnail = cls.create_thumnail(image, "team")
+            s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg", ExtraArgs=cls.extra_args)
+
+            image.seek(0)
+            s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg", ExtraArgs=cls.extra_args)
+        except UnidentifiedImageError:
+            raise exception.TeamImageTypeError()
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}", _uuid
 
@@ -66,11 +75,14 @@ class S3Utils:
     def upload_user_image_on_s3(cls, id, image):
         s3_client = cls.client
         root = cls.get_user_image_name(id)
-        thumnail = cls.create_thumnail(image, "user")
-        s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg")
+        try:
+            thumnail = cls.create_thumnail(image, "user")
+            s3_client.upload_fileobj(thumnail, cls.bucket, root + "thumnail.jpg", ExtraArgs=cls.extra_args)
 
-        image.seek(0)
-        s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg")
+            image.seek(0)
+            s3_client.upload_fileobj(image, cls.bucket, root + "image.jpg", ExtraArgs=cls.extra_args)
+        except UnidentifiedImageError:
+            raise exception.TeamImageTypeError()
 
         return f"https://{cls.bucket}.s3.{cls.region}.amazonaws.com/{root}"
 
