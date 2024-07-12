@@ -9,3 +9,13 @@ class UserNotFoundError(APIException):
 class TeamNotFoundError(APIException):
     status_code = 404
     default_detail = {"message": "해당하는 팀이 존재하지 않습니다.", "code": "0001"}
+
+
+class TechNotFoundError(APIException):
+    status_code = 404
+    default_detail = {"message": "해당하는 기술스택이 존재하지 않습니다.", "code": "0002"}
+
+
+class ApplyNotFoundError(APIException):
+    status_code = 404
+    default_detail = {"message": "해당하는 지원이 존재하지 않습니다.", "code": "0003"}

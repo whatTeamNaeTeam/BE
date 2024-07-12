@@ -1,6 +1,8 @@
-from core.exceptions import NotFoundError, ClosedApplyError, DuplicatedApplyError, SerializerNotValidError
+import core.exception.notfound as notfound_exception
+import core.exception.apply as apply_exception
 from core.service import BaseServiceWithCheckLeader
 from core.utils.team import ApplyResponse
+from django.db import IntegrityError
 from team.models import TeamApply, Team, TeamTech, TeamUser
 from team.serializers import TeamApplySerializer
 
@@ -12,7 +14,7 @@ class ApplyService(BaseServiceWithCheckLeader):
         try:
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
 
         queryset = TeamApply.objects.filter(is_approved=False, team_id=team_id)
@@ -21,30 +23,30 @@ class ApplyService(BaseServiceWithCheckLeader):
             serializer = TeamApplySerializer(queryset, many=True)
             return serializer.data
         else:
-            raise NotFoundError()
+            raise notfound_exception.ApplyNotFoundError()
 
     def post_apply(self):
-        bio = self.request.data.get("bio", None)
-        tech = self.request.data.get("subCategory")
+        bio = self.request.data.get("bio", "열심히 하겠습니다!")
         user_id = self.request.user.id
-        team_id = self.kwargs.get("team_id")
+        tech_id = self.kwargs.get("team_id")
+        try:
+            teamTech = TeamTech.objects.get(id=tech_id)
+        except TeamTech.DoesNotExist():
+            raise notfound_exception.TechNotFoundError()
 
-        teamTech = TeamTech.objects.get(team_id=team_id, tech=tech)
         if teamTech.need_num <= teamTech.current_num:
-            raise ClosedApplyError()
+            raise apply_exception.ClosedApplyError()
 
-        apply_data = ApplyResponse.make_data(user_id, team_id, bio, tech)
+        apply_data = ApplyResponse.make_data(user_id, teamTech.team.id, bio, teamTech.tech)
         serializer = TeamApplySerializer(data=apply_data)
 
         if serializer.is_valid():
             try:
                 serializer.save()
-            except Exception:
-                raise DuplicatedApplyError()
+            except IntegrityError:
+                raise apply_exception.DuplicatedApplyError()
 
             return serializer.data
-
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
     def approve_apply(self):
         apply_id = self.kwargs.get("team_id")
@@ -54,14 +56,14 @@ class ApplyService(BaseServiceWithCheckLeader):
             team = Team.objects.get(id=apply.team_id)
             team_tech = TeamTech.objects.get(team_id=team.id, tech=apply.tech)
         except TeamApply.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.ApplyNotFoundError()
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
         except TeamTech.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TechNotFoundError()
 
         if team_tech.current_num >= team_tech.need_num:
-            raise ClosedApplyError()
+            raise apply_exception.ClosedApplyError()
 
         self.check_leader(user_id, team.leader.id)
 
@@ -76,8 +78,6 @@ class ApplyService(BaseServiceWithCheckLeader):
 
             return {"detail": "Success to update apply"}
 
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
     def reject_apply(self):
         apply_id = self.kwargs.get("team_id")
         user_id = self.request.user.id
@@ -85,9 +85,9 @@ class ApplyService(BaseServiceWithCheckLeader):
             apply = TeamApply.objects.get(id=apply_id)
             team = Team.objects.get(id=apply.team_id)
         except TeamApply.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.ApplyNotFoundError()
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
         self.check_leader(user_id, team.leader.id)
         apply.delete()
