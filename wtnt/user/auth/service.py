@@ -46,6 +46,14 @@ class AuthService(BaseService):
         response_data.pop("access")
         return response_data, access_token
 
+    def logout(self):
+        _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
+        try:
+            user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+        except TokenError:
+            raise token_exception.InvalidTokenError()
+        RedisUtils.delete_refresh_token(user_id)
+
 
 class RegisterService(BaseService):
     def finish_register_by_user_input(self):

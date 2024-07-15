@@ -22,6 +22,11 @@ class RedisUtils:
         cls.client.setex(user_id, int(ttl_seconds), refresh_token)
 
     @classmethod
+    def delete_refresh_token(cls, user_id):
+        RedisUtils.init()
+        cls.client.delete(user_id)
+
+    @classmethod
     def get_refresh_token(cls, user_id):
         RedisUtils.init()
         return cls.client.get(user_id)

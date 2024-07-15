@@ -37,6 +37,17 @@ class GithubLoginView(SocialLoginView):
         return response
 
 
+class LogoutView(APIView):
+    def post(self, request, *args, **kwargs):
+        auth_service = AuthService(request)
+        auth_service.logout()
+
+        response = Response("", status=status.HTTP_204_NO_CONTENT)
+        response.headers["access"] = ""
+
+        return response
+
+
 class GithubOAuthCallBackView(APIView):
     permission_classes = [AllowAny]
 
