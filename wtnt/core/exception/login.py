@@ -44,3 +44,8 @@ class EmailTimeoutError(APIException):
 class EmailCodeNotMatchAfterAuthError(APIException):
     status_code = 400
     default_detail = {"message": "인증 시 사용된 코드(이메일)와 Body의 코드(이메일)가 일치하지 않습니다.", "code": "0132"}
+
+
+class EmailCeleryError(APIException):
+    status_code = 400
+    default_detail = {"message": "이메일 발송 도중 문제가 발생했습니다.", "code": "0133"}

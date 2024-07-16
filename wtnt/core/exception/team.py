@@ -6,6 +6,11 @@ class TeamNameLengthError(APIException):
     default_detail = {"message": "팀 이름이 공백이거나 길이가 맞지 않습니다.", "code": "0200"}
 
 
+class TeamNameDuplicateError(APIException):
+    status_code = 400
+    default_detail = {"message": "팀 이름이 중복됩니다.", "code": "0201"}
+
+
 class TeamGenreNotValidError(APIException):
     status_code = 400
     default_detail = {"message": "프로젝트의 유형이 올바르지 않습니다.", "code": "0210"}

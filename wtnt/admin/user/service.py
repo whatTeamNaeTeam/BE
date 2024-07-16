@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 
-from core.exceptions import NotFoundError, KeywordNotMatchError
+import core.exception.notfound as notfound_exception
+import core.exception.team as team_exception
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
 from core.utils.s3 import S3Utils
@@ -11,13 +12,12 @@ User = get_user_model()
 
 class AdminUserService(BaseService, ListPagenationSize10):
     def get_not_approved_users(self):
-        try:
-            queryset = User.objects.filter(is_approved=False, is_superuser=False)
+        queryset = User.objects.filter(is_approved=False, is_superuser=False)
+        if queryset:
             serializer = ApproveUserSerializer(queryset, many=True)
             return serializer.data
 
-        except User.DoesNotExist:
-            raise NotFoundError()
+        raise notfound_exception.UserNotFoundError()
 
     def approve_users(self):
         user_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -25,7 +25,7 @@ class AdminUserService(BaseService, ListPagenationSize10):
         if cnt:
             return {"detail": "Success to update users"}
         else:
-            raise NotFoundError()
+            raise notfound_exception.UserNotFoundError()
 
     def reject_users(self, status):
         user_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -36,7 +36,7 @@ class AdminUserService(BaseService, ListPagenationSize10):
         if cnt:
             return {"detail": "Success to reject users"}
         else:
-            raise NotFoundError()
+            raise notfound_exception.UserNotFoundError()
 
     def get_approved_users(self):
         queryset = User.objects.filter(is_approved=True, is_superuser=False).order_by("student_num")
@@ -56,10 +56,10 @@ class AdminUserService(BaseService, ListPagenationSize10):
         elif search_filter == "position":
             queryset = User.objects.search_by_position(position=keyword)
         else:
-            raise KeywordNotMatchError()
+            raise team_exception.TeamKeywordNotMatchError()
 
         if not queryset:
-            raise NotFoundError()
+            raise notfound_exception.UserNotFoundError()
 
         paginated = self.paginate_queryset(queryset, self.request, view=self)
         serializer = ApproveUserSerializer(paginated, many=True)

@@ -29,7 +29,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
     leader_id = serializers.IntegerField(write_only=True)
     image_url = serializers.SerializerMethodField()
     explain = BinaryField()
-    url = BinaryField()
+    url = BinaryField(required=False, allow_null=True)
 
     class Meta:
         model = Team

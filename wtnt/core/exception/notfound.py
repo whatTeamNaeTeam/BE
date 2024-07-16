@@ -19,3 +19,8 @@ class TechNotFoundError(APIException):
 class ApplyNotFoundError(APIException):
     status_code = 404
     default_detail = {"message": "해당하는 지원이 존재하지 않습니다.", "code": "0003"}
+
+
+class TeamUserNotFoundError(APIException):
+    status_code = 404
+    default_detail = {"message": "해당하는 팀원이 존재하지 않습니다.", "code": "0004"}

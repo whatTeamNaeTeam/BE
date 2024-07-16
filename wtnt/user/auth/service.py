@@ -7,7 +7,6 @@ from core.utils.redis import RedisUtils
 from core.service import BaseService
 import core.exception.login as login_exception
 import core.exception.token as token_exception
-from core.exceptions import CeleryTaskError
 from user.tasks import send_email
 from user.serializers import UserSerializer
 
@@ -45,6 +44,14 @@ class AuthService(BaseService):
 
         response_data.pop("access")
         return response_data, access_token
+
+    def logout(self):
+        _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
+        try:
+            user_id = AccessToken(access_token, verify=False).payload.get("user_id")
+        except TokenError:
+            raise token_exception.InvalidTokenError()
+        RedisUtils.delete_refresh_token(user_id)
 
 
 class RegisterService(BaseService):
@@ -93,11 +100,11 @@ class RefreshService(BaseService):
 class EmailVerifyService(BaseService):
     def send_email(self):
         email = self.request.data.get("email")
-
         try:
             send_email.delay(email)
         except Exception as e:
-            raise CeleryTaskError(detail=str(e))
+            print(f"Exception: {e}")
+            raise login_exception.EmailCeleryError()
 
     def check_code(self):
         code = self.request.data.get("code")

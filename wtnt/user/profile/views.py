@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
+import core.exception.request as exception
 from core.permissions import IsApprovedUser
 from .service import ProfileService, MyActivityServcie, MyTeamManageService
 
@@ -20,6 +21,13 @@ class UserProfileView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
+        required_field = ["explain", "position"]
+        if 2 <= len(request.data) <= 3:
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         profile_service = ProfileService(request, **kwargs)
         profile_service.check_ownership()
         data = profile_service.update_user_info()
@@ -31,6 +39,13 @@ class UserTechView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        required_field = ["tech"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         profile_service = ProfileService(request, **kwargs)
         profile_service.check_ownership()
         data = profile_service.update_tech_info()
@@ -42,6 +57,13 @@ class UserUrlView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        required_field = ["url"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         profile_service = ProfileService(request, **kwargs)
         profile_service.check_ownership()
         data = profile_service.update_user_url_info()

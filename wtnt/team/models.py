@@ -25,6 +25,9 @@ class Team(TimestampedModel):
     objects = TeamManager()
 
     def clean(self):
+        if Team.objects.filter(title=self.title).exclude(pk=self.pk).exists():
+            raise exception.TeamNameDuplicateError()
+
         if not (0 < len(self.title) <= 30):
             raise exception.TeamNameLengthError()
 

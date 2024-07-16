@@ -2,14 +2,13 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from team.serializers import TeamApplySerializer
+import core.exception.request as exception
 from core.permissions import IsApprovedUser
 from .service import ApplyService
 
 
 class TeamApplyView(APIView):
     permission_classes = [IsApprovedUser]
-    serializer_class = TeamApplySerializer
 
     def get(self, request, *args, **kwargs):
         apply_service = ApplyService(request, **kwargs)
@@ -18,6 +17,13 @@ class TeamApplyView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
+        required_field = ["bio"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         apply_service = ApplyService(request, **kwargs)
         data = apply_service.post_apply()
 
