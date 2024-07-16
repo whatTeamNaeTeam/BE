@@ -7,7 +7,6 @@ from core.utils.redis import RedisUtils
 from core.service import BaseService
 import core.exception.login as login_exception
 import core.exception.token as token_exception
-from core.exceptions import CeleryTaskError
 from user.tasks import send_email
 from user.serializers import UserSerializer
 
@@ -101,11 +100,11 @@ class RefreshService(BaseService):
 class EmailVerifyService(BaseService):
     def send_email(self):
         email = self.request.data.get("email")
-
         try:
             send_email.delay(email)
         except Exception as e:
-            raise CeleryTaskError(detail=str(e))
+            print(f"Exception: {e}")
+            raise login_exception.EmailCeleryError()
 
     def check_code(self):
         code = self.request.data.get("code")
