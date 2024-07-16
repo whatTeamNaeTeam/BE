@@ -78,7 +78,6 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("core.authenticator.CustomJWTAuthentication",),
-    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
 
 
