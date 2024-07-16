@@ -22,7 +22,12 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
         ):
             if request.META.get("HTTP_X_FROM", None) == "web":
                 response.set_cookie(
-                    "access", response.headers.get("access", None), httponly=True, samesite="none", secure=True
+                    "access",
+                    response.headers.get("access", None),
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+                    domain="whatmeow.shop",
                 )
                 if is_valid:
                     del response.headers["access"]
@@ -31,7 +36,15 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
 
         elif is_logout and response.status_code == status.HTTP_204_NO_CONTENT:
             for cookie_name in request.COOKIES:
-                response.set_cookie(cookie_name, value="", httponly=True, samesite="none", secure=True, max_age=0)
+                response.set_cookie(
+                    cookie_name,
+                    value="",
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+                    max_age=0,
+                    domain="whatmeow.shop",
+                )
 
             if request.META.get("HTTP_X_FROM", None) == "web":
                 del response.headers["access"]
