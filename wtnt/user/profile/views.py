@@ -22,7 +22,7 @@ class UserProfileView(APIView):
 
     def patch(self, request, *args, **kwargs):
         required_field = ["explain", "position"]
-        if 2 <= len(request.data) <= 3:
+        if not (2 <= len(request.data) <= 3):
             raise exception.InvalidRequestError()
         for field in required_field:
             if field not in request.data:

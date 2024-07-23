@@ -19,7 +19,7 @@ class TeamView(APIView):
 
     def post(self, request, *args, **kwargs):
         required_field = ["title", "genre", "explain", "subCategory", "memberCount"]
-        if 5 <= len(request.data) <= 7:
+        if not (5 <= len(request.data) <= 7):
             raise exception.InvalidRequestError()
         for field in required_field:
             if field not in request.data:
@@ -41,7 +41,7 @@ class TeamDetailView(APIView):
 
     def put(self, request, *args, **kwargs):
         required_field = ["title", "genre", "explain", "subCategory", "memberCount"]
-        if 5 <= len(request.data) <= 7:
+        if not (5 <= len(request.data) <= 7):
             raise exception.InvalidRequestError()
         for field in required_field:
             if field not in request.data:
