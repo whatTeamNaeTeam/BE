@@ -8,9 +8,6 @@ jobs:
   deploy:
     name: deploy
     runs-on: ubuntu-latest
-  build:
-    name: Build
-    runs-on: ubuntu-latest
     steps:
     - name: Run SSH Connection and Pull
       uses: appleboy/ssh-action@v1.0.3
