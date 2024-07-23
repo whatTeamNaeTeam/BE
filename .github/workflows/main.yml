@@ -1,0 +1,28 @@
+name: Deploy to EC2 on main
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run SSH Connection and Pull
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ${{ secrets.AWS_EC2_USERNAME }}
+        password: ${{ secrets.AWS_EC2_PASSWORD }}
+        port: ${{ secrets.AWS_EC2_SSH_PORT }}
+        script: |
+          cd project/BE
+          git fetch origin
+          git pull origin main
+          sudo systemctl restart gunicorn
+          sudo systemctl restart celery
+          sudo systemctl restart celerybeat
