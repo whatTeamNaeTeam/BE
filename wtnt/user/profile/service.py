@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 
+import core.exception.notfound as notfound_exception
+import core.exception.team as team_exception
 from core.service import BaseServiceWithCheckOwnership
-from core.exceptions import NotFoundError, SerializerNotValidError, KeywordNotMatchError
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
@@ -26,7 +27,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
             return ProfileResponse.make_data(user_serializer.data, url, tech, owner_id)
         except User.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.UserNotFoundError()
 
     def get_url_data(self, user_id):
         try:
@@ -62,8 +63,6 @@ class ProfileService(BaseServiceWithCheckOwnership):
             serializer.save()
             return {"explain": explain, "position": position, "image_url": url + "image.jpg"}
 
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
     def update_user_url_info(self):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
@@ -80,8 +79,6 @@ class ProfileService(BaseServiceWithCheckOwnership):
             serializer.save()
             data = ProfileResponse.make_url_data(serializer.data)
             return data
-
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
 
     def update_tech_info(self):
         owner_id = self.kwargs.get("user_id")
@@ -100,8 +97,6 @@ class ProfileService(BaseServiceWithCheckOwnership):
             data = ProfileResponse.make_tech_data(serializer.data)
             return data
 
-        raise SerializerNotValidError(detail=SerializerNotValidError.get_detail(serializer.errors))
-
 
 class MyActivityServcie(BaseServiceWithCheckOwnership):
     def get_my_activity(self):
@@ -119,7 +114,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
             elif keyword == "inprogress":
                 team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
             else:
-                raise KeywordNotMatchError()
+                raise team_exception.TeamKeywordNotMatchError()
 
         serializer = TeamListSerializer(team_data, many=True)
         teams = TeamResponse.get_team_list_response(serializer.data, user_id)
@@ -157,7 +152,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
         try:
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
         if team.leader.id == user_id:
             S3Utils.delete_team_image_on_s3(team.uuid)
@@ -169,9 +164,9 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
                 team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
                 team_tech = TeamTech.objects.get(tech=team_apply.tech, team_id=team_id, user_id=user_id)
             except TeamApply.DoesNotExist:
-                raise NotFoundError()
+                raise notfound_exception.ApplyNotFoundError()
             except TeamUser.DoesNotExist:
-                raise NotFoundError()
+                raise notfound_exception.TeamUserNotFoundError()
 
             team_apply.delete()
             team_user.delete()

@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 
+import core.exception.notfound as notfound_exception
+import core.exception.team as team_exception
 from admin.serializers import ApproveTeamSerializer
-from core.exceptions import NotFoundError, KeywordNotMatchError
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
 from core.utils.s3 import S3Utils
@@ -18,7 +19,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
             return serializer.data
 
         except Team.DoesNotExist:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
     def approve_teams(self):
         team_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -26,7 +27,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         if cnt:
             return {"detail": "Success to update teams"}
         else:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
     def reject_teams(self, status):
         team_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -38,7 +39,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         if cnt:
             return {"detail": "Success to reject teams"}
         else:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
     def get_approved_teams(self):
         queryset = Team.objects.filter(is_approved=True).order_by("id")
@@ -59,10 +60,10 @@ class AdminTeamService(BaseService, ListPagenationSize10):
             leader_ids = User.objects.search_by_name(name=keyword).values_list("id", flat=True)
             queryset = Team.objects.search_by_leader_ids(leader_ids=leader_ids)
         else:
-            raise KeywordNotMatchError
+            raise team_exception.TeamKeywordNotMatchError()
 
         if not queryset:
-            raise NotFoundError()
+            raise notfound_exception.TeamNotFoundError()
 
         paginated = self.paginate_queryset(queryset, self.request, view=self)
         serializer = ApproveTeamSerializer(paginated, many=True)

@@ -21,4 +21,4 @@ class ApproveTeamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ["id", "name", "created_at", "is_approved", "genre"]
+        fields = ["id", "title", "created_at", "is_approved", "genre"]

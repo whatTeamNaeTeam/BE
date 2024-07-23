@@ -1,6 +1,18 @@
 from rest_framework import serializers
 from .models import Team, TeamTech, TeamApply, Likes
 from core.fields import BinaryField
+import core.exception.team as exception
+
+
+class LeaderInfoIncludedSerializer(serializers.ModelSerializer):
+    leader_info = serializers.SerializerMethodField(read_only=True)
+
+    def get_leader_info(self, obj):
+        return {
+            "name": obj.leader.name,
+            "id": obj.leader.id,
+            "image_url": obj.leader.image if "github" in obj.leader.image else obj.leader.image + "thumnail.jpg",
+        }
 
 
 class TeamTechCreateSerializer(serializers.ModelSerializer):
@@ -9,16 +21,15 @@ class TeamTechCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "tech", "need_num", "current_num"]
 
 
-class TeamCreateSerializer(serializers.ModelSerializer):
+class TeamCreateSerializer(LeaderInfoIncludedSerializer):
     category = TeamTechCreateSerializer(many=True)
     view = serializers.IntegerField(read_only=True)
     image = serializers.CharField(write_only=True)
     uuid = serializers.UUIDField(write_only=True)
     leader_id = serializers.IntegerField(write_only=True)
     image_url = serializers.SerializerMethodField()
-    leader_info = serializers.SerializerMethodField(read_only=True)
     explain = BinaryField()
-    url = BinaryField()
+    url = BinaryField(required=False, allow_null=True)
 
     class Meta:
         model = Team
@@ -39,11 +50,37 @@ class TeamCreateSerializer(serializers.ModelSerializer):
             "uuid",
         ]
 
-    def get_leader_info(self, obj):
-        return {"name": obj.leader.name, "id": obj.leader.id, "image_url": obj.leader.image + "thumnail.jpg"}
-
     def get_image_url(self, obj):
         return obj.image + "image.jpg"
+
+    from rest_framework.fields import empty
+
+    def run_validation(self, data=empty):
+        (is_empty_value, data) = self.validate_empty_values(data)
+        if is_empty_value:
+            return data
+
+        team_data = {key: value for key, value in data.items() if key != "category"}
+        instance = Team(**team_data)
+        instance.clean()
+
+        value = self.to_internal_value(data)
+        self.run_validators(value)
+        value = self.validate(value)
+
+        return value
+
+    def validate(self, data):
+        url = data.get("url", None)
+        explain = data.get("explain", None)
+
+        if explain is not None and not (0 < len(explain.decode()) <= 2000):
+            raise exception.TeamExplainLengthError()
+
+        if url is not None and len(url.decode()) == 0:
+            raise exception.TeamUrlLengthError()
+
+        return data
 
     def create(self, validated_data):
         techs = validated_data.pop("category")
@@ -89,18 +126,14 @@ class TeamApplySerializer(serializers.ModelSerializer):
         fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
 
 
-class TeamListSerializer(serializers.ModelSerializer):
+class TeamListSerializer(LeaderInfoIncludedSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
-    leader_info = serializers.SerializerMethodField(read_only=True)
     image = serializers.CharField(write_only=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
         fields = ["id", "title", "image", "image_url", "category", "leader_info", "like", "version", "view", "genre"]
-
-    def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}
 
     def get_image_url(self, obj):
         return obj.image + "thumnail.jpg"
@@ -115,12 +148,7 @@ class TeamLikeSerializer(serializers.ModelSerializer):
         fields = ["user_id", "team_id"]
 
 
-class TeamManageActivitySerializer(serializers.ModelSerializer):
-    leader_info = serializers.SerializerMethodField(read_only=True)
-
+class TeamManageActivitySerializer(LeaderInfoIncludedSerializer):
     class Meta:
         model = Team
         fields = ["id", "title", "leader_info"]
-
-    def get_leader_info(self, obj):
-        return {"id": obj.leader.id, "name": obj.leader.name, "image_url": obj.leader.image + "thumnail.jpg"}

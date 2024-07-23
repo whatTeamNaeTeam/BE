@@ -3,13 +3,14 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 
+import core.exception.request as exception
 import requests
 from .service import AuthService, RegisterService, RefreshService, EmailVerifyService
 from user.serializers import UserSerializer
@@ -25,6 +26,13 @@ class GithubLoginView(SocialLoginView):
     client_class = OAuth2Client
 
     def post(self, request, *args, **kwargs):
+        required_field = ["code"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         auth_service = AuthService(request)
         self.callback_url = auth_service.determine_callback_url()
 
@@ -33,6 +41,19 @@ class GithubLoginView(SocialLoginView):
 
         response = Response(response_data, status=status.HTTP_200_OK)
         response.headers["access"] = access_token
+
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        auth_service = AuthService(request)
+        auth_service.logout()
+
+        response = Response("", status=status.HTTP_204_NO_CONTENT)
+        response.headers["access"] = ""
 
         return response
 
@@ -63,11 +84,17 @@ class FinishGithubLoginView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        register_service = RegisterService(request)
-        user = register_service.finish_register_by_user_input()
-        serializer = self.serializer_class(user)
+        required_field = ["student_num", "code", "email", "name", "position"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
 
-        return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
+        register_service = RegisterService(request)
+        data = register_service.finish_register_by_user_input()
+
+        return Response({"user": data}, status=status.HTTP_201_CREATED)
 
 
 class WtntTokenRefreshView(TokenRefreshView):
@@ -88,12 +115,26 @@ class EmailVerifyView(APIView):
     permission_classes = [AllowAny]
 
     def patch(self, request, *args, **kwargs):
+        required_field = ["code", "email"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         email_verify_service = EmailVerifyService(request)
         code = email_verify_service.check_code()
 
         return Response({"code": code}, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
+        required_field = ["email"]
+        if len(request.data) != len(required_field):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         email_verify_service = EmailVerifyService(request)
         email_verify_service.send_email()
 

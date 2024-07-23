@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
 
+import core.exception.request as exception
 from core.permissions import IsApprovedUser
 from .service import TeamService
 
@@ -17,6 +18,13 @@ class TeamView(APIView):
     permission_classes = [IsApprovedUser]
 
     def post(self, request, *args, **kwargs):
+        required_field = ["title", "genre", "explain", "subCategory", "memberCount"]
+        if not (5 <= len(request.data) <= 7):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         team_service = TeamService(request)
         data = team_service.create_team()
         return Response(data, status=status.HTTP_201_CREATED)
@@ -32,6 +40,13 @@ class TeamDetailView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
+        required_field = ["title", "genre", "explain", "subCategory", "memberCount"]
+        if not (5 <= len(request.data) <= 7):
+            raise exception.InvalidRequestError()
+        for field in required_field:
+            if field not in request.data:
+                raise exception.InvalidRequestError()
+
         team_service = TeamService(request, **kwargs)
         data = team_service.update_team()
 

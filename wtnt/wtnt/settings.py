@@ -28,7 +28,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
-
+MY_DOMAIN = "https://api.whatmeow.shop"
 SITE_ID = 1
 
 ALLOWED_HOSTS = ["*"]
@@ -77,7 +77,7 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("core.authenticator.CustomJWTAuthentication",),
 }
 
 
