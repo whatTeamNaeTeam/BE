@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -138,10 +139,13 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
-        team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_users = TeamUser.objects.filter(user_id=owner_id).values("team_id").annotate(member_count=Count("team_id"))
+        team_ids = [team["team_id"] for team in team_users]
+        member_counts = [team["member_count"] for team in team_users]
+
         team_data = Team.objects.filter(id__in=team_ids)
         serializer = TeamManageActivitySerializer(team_data, many=True)
-        data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True)
+        data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True, count=member_counts)
 
         return data
 
