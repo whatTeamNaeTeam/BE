@@ -6,7 +6,12 @@ import core.exception.team as team_exception
 from core.service import BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
-from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
+from user.serializers import (
+    UserUrlSerializer,
+    UserTechSerializer,
+    UserProfileSerializer,
+    UserSerializerOnTeamManageDetail,
+)
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
 from core.utils.team import TeamResponse
@@ -178,3 +183,19 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         team_tech.save()
 
         return {"detail": "Success to leave team"}
+
+    def get_my_team_detail(self):
+        team_id = self.kwargs.get("team_id")
+
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
+
+        member_ids = TeamUser.objects.filter(team_id=team_id).values_list("user_id", flat=True)
+        members = User.objects.filter(id__in=member_ids)
+        serializer = UserSerializerOnTeamManageDetail(members, many=True)
+
+        data = ProfileResponse.make_team_manage_detail_data(serializer.data, team)
+
+        return data
