@@ -91,9 +91,15 @@ class UserManageActivityView(APIView):
 
         return Response({"team": data}, status=status.HTTP_200_OK)
 
+    def patch(self, request, *args, **kwargs):
+        myteam_service = MyTeamManageService(request, **kwargs)
+        data = myteam_service.leave_team()
+
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
+
     def delete(self, request, *args, **kwargs):
         myteam_service = MyTeamManageService(request, **kwargs)
-        data = myteam_service.delete_or_leave_team()
+        data = myteam_service.delete_team()
 
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
