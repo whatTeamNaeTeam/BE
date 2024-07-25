@@ -17,7 +17,7 @@ class ApplyService(BaseServiceWithCheckLeader):
             raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
 
-        queryset = TeamApply.objects.filter(team_id=team_id)
+        queryset = TeamApply.objects.filter(team_id=team_id, is_approved=False)
 
         if queryset:
             serializer = TeamApplySerializer(queryset, many=True)
@@ -70,10 +70,11 @@ class ApplyService(BaseServiceWithCheckLeader):
         team_tech.current_num += 1
         team_tech.save()
 
-        teamUser = TeamUser(team_id=team.id, user_id=user_id, tech=apply.tech)
+        teamUser = TeamUser(team_id=team.id, user_id=apply.user_id, tech=apply.tech)
         teamUser.save()
 
-        apply.delete()
+        apply.is_approved = True
+        apply.save()
 
         return {"detail": "Success to update apply"}
 
