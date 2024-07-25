@@ -22,3 +22,18 @@ class ApproveTeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = ["id", "title", "created_at", "is_approved", "genre"]
+
+
+class AdminTeamManageDetailSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    image = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "name", "student_num", "position", "image", "image_url"]
+
+    def get_image_url(self, obj):
+        if "github" not in obj.image:
+            return obj.image + "thumnail.jpg"
+        else:
+            return obj.image
