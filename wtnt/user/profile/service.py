@@ -3,7 +3,7 @@ from django.db.models import Count
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
-from core.service import BaseServiceWithCheckOwnership
+from core.service import BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
 from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
@@ -134,7 +134,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         return data
 
 
-class MyTeamManageService(BaseServiceWithCheckOwnership):
+class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader):
     def get_my_teams(self):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
@@ -149,7 +149,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
 
         return data
 
-    def delete_or_leave_team(self):
+    def delete_team(self):
         team_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
@@ -157,24 +157,24 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
+        self.check_leader(user_id, team.leader.id)
+        S3Utils.delete_team_image_on_s3(team.uuid)
+        team.delete()
 
-        if team.leader.id == user_id:
-            S3Utils.delete_team_image_on_s3(team.uuid)
-            team.delete()
-            return {"detail": "Success to delete team"}
-        else:
-            try:
-                team_apply = TeamApply.objects.get(team_id=team_id, user_id=user_id)
-                team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
-                team_tech = TeamTech.objects.get(tech=team_apply.tech, team_id=team_id, user_id=user_id)
-            except TeamApply.DoesNotExist:
-                raise notfound_exception.ApplyNotFoundError()
-            except TeamUser.DoesNotExist:
-                raise notfound_exception.TeamUserNotFoundError()
+        return {"detail": "Success to delete team"}
 
-            team_apply.delete()
-            team_user.delete()
-            team_tech.current_num -= 1
-            team_tech.save()
+    def leave_team(self):
+        team_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
 
-            return {"detail": "Success to leave team"}
+        try:
+            team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
+            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id, user_id=user_id)
+        except TeamUser.DoesNotExist:
+            raise notfound_exception.TeamUserNotFoundError()
+
+        team_user.delete()
+        team_tech.current_num -= 1
+        team_tech.save()
+
+        return {"detail": "Success to leave team"}
