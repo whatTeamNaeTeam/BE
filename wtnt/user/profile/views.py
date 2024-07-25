@@ -104,6 +104,16 @@ class UserManageActivityView(APIView):
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
+class UserManageActivityDetailView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        myteam_service = MyTeamManageService(request, **kwargs)
+        data = myteam_service.get_my_team_detail()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class UserLikeTeamView(APIView):
     permission_classes = [IsApprovedUser]
 
