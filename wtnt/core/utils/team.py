@@ -3,11 +3,12 @@ from team.models import Likes
 
 class TeamResponse:
     @staticmethod
-    def get_team_list_response(team_data, user_id, is_manage=None):
+    def get_team_list_response(team_data, user_id, is_manage=None, count=None):
         if is_manage:
-            for d in team_data:
+            for d, c in zip(team_data, count):
                 if d["leader_info"]["id"] == user_id:
                     d["leader_info"]["is_leader"] = True
+                d["member_count"] = c
         else:
             team_ids = []
             for d in team_data:
