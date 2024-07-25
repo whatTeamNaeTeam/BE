@@ -18,10 +18,20 @@ class ApproveUserSerializer(serializers.ModelSerializer):
 class ApproveTeamSerializer(serializers.ModelSerializer):
     is_approved = serializers.BooleanField(write_only=True)
     genre = serializers.CharField(read_only=True)
+    leader_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Team
-        fields = ["id", "title", "created_at", "is_approved", "genre"]
+        fields = ["id", "title", "created_at", "is_approved", "genre", "leader_info"]
+
+    def get_leader_info(self, obj):
+        return {
+            "name": obj.leader.name,
+            "id": obj.leader.id,
+            "image_url": obj.leader.image if "github" in obj.leader.image else obj.leader.image + "thumnail.jpg",
+            "student_num": obj.leader.student_num,
+            "position": obj.leader.position,
+        }
 
 
 class AdminTeamManageDetailSerializer(serializers.ModelSerializer):
