@@ -2,11 +2,12 @@ from django.contrib.auth import get_user_model
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
-from admin.serializers import ApproveTeamSerializer
+from admin.serializers import ApproveTeamSerializer, AdminTeamManageDetailSerializer
 from core.pagenations import ListPagenationSize10
 from core.service import BaseService
 from core.utils.s3 import S3Utils
-from team.models import Team
+from core.utils.admin import TeamResponse
+from team.models import Team, TeamUser
 
 User = get_user_model()
 
@@ -69,3 +70,19 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         serializer = ApproveTeamSerializer(paginated, many=True)
 
         return self.get_paginated_response(serializer.data)
+
+    def detailed_team(self):
+        team_id = self.kwargs.get("team_id")
+
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
+
+        member_ids = TeamUser.objects.filter(team_id=team_id).values_list("user_id", flat=True)
+        members = User.objects.filter(id__in=member_ids)
+        serializer = AdminTeamManageDetailSerializer(members, many=True)
+
+        data = TeamResponse.make_team_manage_detail_data(serializer.data, team)
+
+        return data

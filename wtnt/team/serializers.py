@@ -119,11 +119,10 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
 class TeamApplySerializer(serializers.ModelSerializer):
     team_id = serializers.IntegerField()
     user_id = serializers.IntegerField()
-    is_approved = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = TeamApply
-        fields = ["id", "team_id", "user_id", "is_approved", "created_at", "bio", "tech"]
+        fields = ["id", "team_id", "user_id", "created_at", "bio", "tech"]
 
 
 class TeamListSerializer(LeaderInfoIncludedSerializer):

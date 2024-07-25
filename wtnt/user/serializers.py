@@ -49,3 +49,18 @@ class UserTechSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserTech
         fields = ["tech", "user_id"]
+
+
+class UserSerializerOnTeamManageDetail(BaseUserSerializer):
+    image_url = serializers.SerializerMethodField()
+    image = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = UserSerializer.Meta.fields + ["position", "image_url", "image"]
+
+    def get_image_url(self, obj):
+        if "github" not in obj.image:
+            return obj.image + "thumnail.jpg"
+        else:
+            return obj.image

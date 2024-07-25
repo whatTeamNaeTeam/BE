@@ -1,8 +1,8 @@
-name: Deploy to EC2 on main
+name: Deploy to EC2 on develop
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ develop ]
 
 jobs:
   deploy:
@@ -19,7 +19,7 @@ jobs:
         script: |
           cd project/BE
           git fetch origin
-          git pull origin main
+          git pull origin develop
           sudo systemctl restart gunicorn
           sudo systemctl restart celery
           sudo systemctl restart celerybeat
