@@ -27,11 +27,10 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         if serializer.is_valid():
             team = serializer.save()
 
-            teamUser = TeamUser(team_id=team.id, user_id=user_id)
+            teamUser = TeamUser(team_id=team.id, user_id=user_id, tech="팀장")
             teamUser.save()
 
             return TeamResponse.get_detail_response(serializer.data, user_id)
-        print("말도안돼 왜 validation 통과 못함?")
 
     def update_team(self):
         user_id = self.request.user.id

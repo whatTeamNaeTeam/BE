@@ -17,7 +17,7 @@ class ApplyService(BaseServiceWithCheckLeader):
             raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
 
-        queryset = TeamApply.objects.filter(is_approved=False, team_id=team_id)
+        queryset = TeamApply.objects.filter(team_id=team_id, is_approved=False)
 
         if queryset:
             serializer = TeamApplySerializer(queryset, many=True)
@@ -31,7 +31,7 @@ class ApplyService(BaseServiceWithCheckLeader):
         tech_id = self.kwargs.get("team_id")
         try:
             teamTech = TeamTech.objects.get(id=tech_id)
-        except TeamTech.DoesNotExist():
+        except TeamTech.DoesNotExist:
             raise notfound_exception.TechNotFoundError()
 
         if teamTech.need_num <= teamTech.current_num:
@@ -67,16 +67,16 @@ class ApplyService(BaseServiceWithCheckLeader):
 
         self.check_leader(user_id, team.leader.id)
 
-        serializer = TeamApplySerializer(apply, data={"is_approved": True}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            team_tech.current_num += 1
-            team_tech.save()
+        team_tech.current_num += 1
+        team_tech.save()
 
-            teamUser = TeamUser(team_id=team.id, user_id=user_id)
-            teamUser.save()
+        teamUser = TeamUser(team_id=team.id, user_id=apply.user_id, tech=apply.tech)
+        teamUser.save()
 
-            return {"detail": "Success to update apply"}
+        apply.is_approved = True
+        apply.save()
+
+        return {"detail": "Success to update apply"}
 
     def reject_apply(self):
         apply_id = self.kwargs.get("team_id")

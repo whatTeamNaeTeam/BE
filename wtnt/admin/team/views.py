@@ -46,6 +46,16 @@ class TeamManageView(APIView):
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
+class TeamManageDetailView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        admin_service = AdminTeamService(request, **kwargs)
+        data = admin_service.detailed_team()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class TeamDeleteView(APIView):
     permission_classes = [IsAdminUser]
 
