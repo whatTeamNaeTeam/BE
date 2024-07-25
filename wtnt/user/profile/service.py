@@ -1,11 +1,17 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
-from core.service import BaseServiceWithCheckOwnership
+from core.service import BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
-from user.serializers import UserUrlSerializer, UserTechSerializer, UserProfileSerializer
+from user.serializers import (
+    UserUrlSerializer,
+    UserTechSerializer,
+    UserProfileSerializer,
+    UserSerializerOnTeamManageDetail,
+)
 from team.serializers import TeamListSerializer, TeamManageActivitySerializer
 from core.utils.profile import ProfileResponse
 from core.utils.team import TeamResponse
@@ -133,19 +139,22 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         return data
 
 
-class MyTeamManageService(BaseServiceWithCheckOwnership):
+class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader):
     def get_my_teams(self):
         owner_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
-        team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
+        team_users = TeamUser.objects.filter(user_id=owner_id).values("team_id").annotate(member_count=Count("team_id"))
+        team_ids = [team["team_id"] for team in team_users]
+        member_counts = [team["member_count"] for team in team_users]
+
         team_data = Team.objects.filter(id__in=team_ids)
         serializer = TeamManageActivitySerializer(team_data, many=True)
-        data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True)
+        data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True, count=member_counts)
 
         return data
 
-    def delete_or_leave_team(self):
+    def delete_team(self):
         team_id = self.kwargs.get("user_id")
         user_id = self.request.user.id
 
@@ -153,24 +162,40 @@ class MyTeamManageService(BaseServiceWithCheckOwnership):
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
+        self.check_leader(user_id, team.leader.id)
+        S3Utils.delete_team_image_on_s3(team.uuid)
+        team.delete()
 
-        if team.leader.id == user_id:
-            S3Utils.delete_team_image_on_s3(team.uuid)
-            team.delete()
-            return {"detail": "Success to delete team"}
-        else:
-            try:
-                team_apply = TeamApply.objects.get(team_id=team_id, user_id=user_id)
-                team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
-                team_tech = TeamTech.objects.get(tech=team_apply.tech, team_id=team_id, user_id=user_id)
-            except TeamApply.DoesNotExist:
-                raise notfound_exception.ApplyNotFoundError()
-            except TeamUser.DoesNotExist:
-                raise notfound_exception.TeamUserNotFoundError()
+        return {"detail": "Success to delete team"}
 
-            team_apply.delete()
-            team_user.delete()
-            team_tech.current_num -= 1
-            team_tech.save()
+    def leave_team(self):
+        team_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
 
-            return {"detail": "Success to leave team"}
+        try:
+            team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
+            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id, user_id=user_id)
+        except TeamUser.DoesNotExist:
+            raise notfound_exception.TeamUserNotFoundError()
+
+        team_user.delete()
+        team_tech.current_num -= 1
+        team_tech.save()
+
+        return {"detail": "Success to leave team"}
+
+    def get_my_team_detail(self):
+        team_id = self.kwargs.get("team_id")
+
+        try:
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
+
+        member_ids = TeamUser.objects.filter(team_id=team_id).values_list("user_id", flat=True)
+        members = User.objects.filter(id__in=member_ids)
+        serializer = UserSerializerOnTeamManageDetail(members, many=True)
+
+        data = ProfileResponse.make_team_manage_detail_data(serializer.data, team)
+
+        return data
