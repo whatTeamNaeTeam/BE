@@ -192,10 +192,11 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
 
-        member_ids = TeamUser.objects.filter(team_id=team_id).values_list("user_id", flat=True)
-        members = User.objects.filter(id__in=member_ids)
-        serializer = UserSerializerOnTeamManageDetail(members, many=True)
+        member_id_tech = TeamUser.objects.filter(team_id=team_id).values_list("user_id", "tech")
+        member_id_tech_dict = {user_id: tech for user_id, tech in member_id_tech}
 
-        data = ProfileResponse.make_team_manage_detail_data(serializer.data, team)
+        members = User.objects.filter(id__in=member_id_tech_dict.keys())
+        serializer = UserSerializerOnTeamManageDetail(members, many=True)
+        data = ProfileResponse.make_team_manage_detail_data(serializer.data, team, member_id_tech_dict)
 
         return data
