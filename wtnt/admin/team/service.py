@@ -79,10 +79,12 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
 
-        member_ids = TeamUser.objects.filter(team_id=team_id).values_list("user_id", flat=True)
-        members = User.objects.filter(id__in=member_ids)
+        member_id_tech = TeamUser.objects.filter(team_id=team_id).values_list("user_id", "tech")
+        member_id_tech_dict = {user_id: tech for user_id, tech in member_id_tech}
+
+        members = User.objects.filter(id__in=member_id_tech_dict.keys())
         serializer = AdminTeamManageDetailSerializer(members, many=True)
 
-        data = TeamResponse.make_team_manage_detail_data(serializer.data, team)
+        data = TeamResponse.make_team_manage_detail_data(serializer.data, team, member_id_tech_dict)
 
         return data
