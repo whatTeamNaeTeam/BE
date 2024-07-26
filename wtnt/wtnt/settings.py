@@ -86,6 +86,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 # Application definition
 
@@ -112,6 +113,7 @@ INSTALLED_APPS = [
     "celery",
     "django_celery_beat",
     "django_celery_results",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -126,6 +128,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "core.middleware.AttachJWTFromHeaderToCookieMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "wtnt.urls"
