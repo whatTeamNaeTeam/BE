@@ -18,8 +18,10 @@ jobs:
         port: ${{ secrets.AWS_EC2_SSH_PORT }}
         script: |
           cd project/BE
+          source venv/bin/activate
           git fetch origin
           git pull origin develop
+          pip install -r requirements.txt
           sudo systemctl restart gunicorn
           sudo systemctl restart celery
           sudo systemctl restart celerybeat
