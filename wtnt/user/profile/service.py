@@ -98,9 +98,17 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         else:
             team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
             if keyword == "accomplished":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+                team_data = (
+                    Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+                    .select_related("leader")
+                    .prefetch_related("category")
+                )
             elif keyword == "inprogress":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+                team_data = (
+                    Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+                    .select_related("leader")
+                    .prefetch_related("category")
+                )
             else:
                 raise team_exception.TeamKeywordNotMatchError()
 
