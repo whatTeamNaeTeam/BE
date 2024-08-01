@@ -94,6 +94,9 @@ class Likes(TimestampedModel):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     objects = LikesManager()
 
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "team"], name="teamlike_unique")]
+
 
 class TeamUser(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
