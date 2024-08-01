@@ -26,32 +26,14 @@ class ProfileService(BaseServiceWithCheckOwnership):
         owner_id = self.request.user.id
 
         try:
-            user = User.objects.get(id=user_id)
-            url = self.get_url_data(user_id)
-            tech = self.get_tech_data(user_id)
+            user = User.objects.select_related("userurls", "usertech").get(id=user_id)
+            url = ProfileResponse.make_url_data(user.userurls.url.decode())
+            tech = ProfileResponse.make_tech_data(user.usertech.tech.decode())
             user_serializer = UserProfileSerializer(user)
 
             return ProfileResponse.make_data(user_serializer.data, url, tech, owner_id)
         except User.DoesNotExist:
             raise notfound_exception.UserNotFoundError()
-
-    def get_url_data(self, user_id):
-        try:
-            url = UserUrls.objects.get(user_id=user_id)
-            response = UserUrlSerializer(url)
-        except UserUrls.DoesNotExist:
-            return None
-
-        return ProfileResponse.make_url_data(response.data)
-
-    def get_tech_data(self, user_id):
-        try:
-            tech = UserTech.objects.get(user_id=user_id)
-            response = UserTechSerializer(tech)
-        except UserTech.DoesNotExist:
-            return None
-
-        return ProfileResponse.make_tech_data(response.data)
 
     def update_user_info(self):
         user = self.request.user
@@ -83,7 +65,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            data = ProfileResponse.make_url_data(serializer.data)
+            data = ProfileResponse.make_url_data(serializer.data["url"])
             return data
 
     def update_tech_info(self):
@@ -100,7 +82,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            data = ProfileResponse.make_tech_data(serializer.data)
+            data = ProfileResponse.make_tech_data(serializer.data["tech"])
             return data
 
 
