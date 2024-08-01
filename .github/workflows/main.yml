@@ -22,6 +22,9 @@ jobs:
           git fetch origin
           git pull origin main
           pip install -r requirements.txt
+          cd wtnt
+          python3.11 manage.py makemigrations
+          python3.11 manage.py migrate
           sudo systemctl restart gunicorn
           sudo systemctl restart celery
           sudo systemctl restart celerybeat
