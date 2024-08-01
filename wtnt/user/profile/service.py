@@ -122,7 +122,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         owner_id = self.request.user.id
 
         like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
-        team_data = Team.objects.filter(id__in=like_team_ids)
+        team_data = Team.objects.filter(id__in=like_team_ids).select_related("leader").prefetch_related("category")
         serializer = TeamListSerializer(team_data, many=True)
         data = TeamResponse.get_team_list_response(serializer.data, owner_id)
 
