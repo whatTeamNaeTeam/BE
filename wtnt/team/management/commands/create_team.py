@@ -20,8 +20,28 @@ class Command(BaseCommand):
             raise CommandError("number의 최대 인풋은 100입니다.")
         seeder = Seed.seeder()
         genres = ["웹", "앱", "게임"]
-        leader_ids = [CustomUser.objects.order_by("?").first() for _ in range(number)]
-        leader_cycle = cycle(leader_ids)
+        categories = [
+            "웹",
+            "IOS",
+            "안드로이드",
+            "크로스플랫폼",
+            "자바",
+            "파이썬",
+            "노드",
+            "UI/UX 기획",
+            "게임 기획",
+            "컨텐츠 기획",
+            "프로젝트 매니저",
+            "유니티",
+            "언리얼",
+            "딥러닝",
+            "머신러닝",
+            "데이터 엔지니어",
+            "게임 그래픽 디자인",
+            "UI/UX 디자인",
+        ]
+        leaders = [CustomUser.objects.order_by("?").first() for _ in range(number)]
+        leader_cycle = cycle(leaders)
 
         seeder.add_entity(
             Team,
@@ -43,52 +63,31 @@ class Command(BaseCommand):
         )
 
         team_ids = seeder.execute()[Team]
-        team_objects = Team.objects.filter(id__in=team_ids)
-        team_cycle = cycle(team_objects)
 
-        seeder.add_entity(
-            TeamUser,
-            number,
-            {
-                "user": lambda x: next(leader_cycle),
-                "team": lambda x: next(team_cycle),
-                "tech": "팀장",
-            },
-        )
+        for team_id, user in zip(team_ids, leaders):
+            team = Team.objects.get(pk=team_id)
+            seeder.add_entity(
+                TeamUser,
+                1,
+                {
+                    "user": user,
+                    "team": team,
+                    "tech": "팀장",
+                },
+            )
 
-        seeder.execute()
+            seeder.execute()
 
-        categories = [
-            "웹",
-            "IOS",
-            "안드로이드",
-            "크로스플랫폼",
-            "자바",
-            "파이썬",
-            "노드",
-            "UI/UX 기획",
-            "게임 기획",
-            "컨텐츠 기획",
-            "프로젝트 매니저",
-            "유니티",
-            "언리얼",
-            "딥러닝",
-            "머신러닝",
-            "데이터 엔지니어",
-            "게임 그래픽 디자인",
-            "UI/UX 디자인",
-        ]
-
-        seeder.add_entity(
-            TeamTech,
-            number,
-            {
-                "current_num": 0,
-                "need_num": lambda x: random.randint(1, 10),
-                "team": lambda x: next(team_cycle),
-                "tech": lambda x: random.choice(categories),
-            },
-        )
+            seeder.add_entity(
+                TeamTech,
+                1,
+                {
+                    "current_num": 0,
+                    "need_num": random.randint(1, 10),
+                    "team": team,
+                    "tech": random.choice(categories),
+                },
+            )
 
         seeder.execute()
 
