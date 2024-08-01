@@ -31,6 +31,8 @@ class Command(BaseCommand):
 
             tech_list = TeamTech.objects.filter(team_id=team.id).values_list("tech", flat=True)
             tech = random.choice(tech_list)
+            team_tech = TeamTech.objects.get(team_id=team.id, tech=tech)
+
             seeder.add_entity(
                 TeamApply,
                 1,
@@ -54,7 +56,14 @@ class Command(BaseCommand):
             )
 
             try:
+                if team_tech.need_num <= team_tech.current_num:
+                    print(f"중복된 데이터 발생, 예상 데이터 주입 개수 {number-1}개")
+                    number -= 1
+                    continue
                 seeder.execute()
+                team_tech.current_num += 1
+                team_tech.save()
+
             except IntegrityError:
                 print(f"중복된 데이터 발생, 예상 데이터 주입 개수 {number-1}개")
                 number -= 1
