@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandParser
+from django.conf import settings
 from user.models import CustomUser
 from django_seed import Seed
 from faker import Faker
@@ -32,7 +33,7 @@ class Command(BaseCommand):
                 "is_approved": True,
                 "is_active": True,
                 "is_staff": False,
-                "image": "default/",
+                "image": f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/default/",
             },
         )
 

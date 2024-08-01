@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandParser, CommandError
+from django.conf import settings
 from team.models import Team, TeamUser, TeamTech
 from user.models import CustomUser
 from django_seed import Seed
@@ -58,7 +59,7 @@ class Command(BaseCommand):
                 "url": lambda x: faker.url().encode(),
                 "is_approved": True,
                 "is_accomplished": False,
-                "image": "https://wtnt-bucket.s3.ap-northeast-2.amazonaws.com/default/",
+                "image": f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/default",
             },
         )
 
