@@ -33,6 +33,11 @@ class Command(BaseCommand):
             tech = random.choice(tech_list)
             team_tech = TeamTech.objects.get(team_id=team.id, tech=tech)
 
+            if team_tech.need_num <= team_tech.current_num:
+                print(f"마감된 분야에 지원으로 인한 추가 실패, 예상 데이터 주입 개수 {number-1}개, {team.id}")
+                number -= 1
+                continue
+
             seeder.add_entity(
                 TeamApply,
                 1,
@@ -56,10 +61,6 @@ class Command(BaseCommand):
             )
 
             try:
-                if team_tech.need_num <= team_tech.current_num:
-                    print(f"중복된 데이터 발생, 예상 데이터 주입 개수 {number-1}개")
-                    number -= 1
-                    continue
                 seeder.execute()
                 team_tech.current_num += 1
                 team_tech.save()
