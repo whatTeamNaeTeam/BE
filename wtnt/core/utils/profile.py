@@ -23,10 +23,13 @@ class ProfileResponse:
 
         for i, member in enumerate(members):
             if member["id"] == leader_id:
-                leader_info = members.pop(i)
+                leader_key = i
+                leader_info = member
                 leader_info["category"] = _dict[leader_info["id"]]
-                break
+                continue
             member["category"] = _dict[member["id"]]
+
+        del members[leader_key]
 
         return {
             "title": team.title,
