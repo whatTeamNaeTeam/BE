@@ -94,7 +94,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
 
         if keyword == "apply":
             team_ids = TeamApply.objects.filter(user_id=owner_id, is_approved=False).values_list("team_id", flat=True)
-            team_data = Team.objects.filter(id__in=team_ids)
+            team_data = Team.objects.filter(id__in=team_ids).select_related("leader").prefetch_related("category")
         else:
             team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
             if keyword == "accomplished":
