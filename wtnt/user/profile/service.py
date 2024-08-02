@@ -138,7 +138,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         team_ids = [team["team_id"] for team in team_users]
         member_counts = [team["member_count"] for team in team_users]
 
-        team_data = Team.objects.filter(id__in=team_ids)
+        team_data = Team.objects.filter(id__in=team_ids).select_related("leader")
         serializer = TeamManageActivitySerializer(team_data, many=True)
         data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True, count=member_counts)
 
@@ -164,7 +164,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
 
         try:
             team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
-            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id, user_id=user_id)
+            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id)
         except TeamUser.DoesNotExist:
             raise notfound_exception.TeamUserNotFoundError()
 
