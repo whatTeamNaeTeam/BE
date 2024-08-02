@@ -27,11 +27,19 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         try:
             user = User.objects.select_related("userurls", "usertech").get(id=user_id)
-            url = ProfileResponse.make_url_data(user.userurls.url.decode())
-            tech = ProfileResponse.make_tech_data(user.usertech.tech.decode())
+            try:
+                user_urls = ProfileResponse.make_url_data(user.userurls.url.decode())
+            except UserUrls.DoesNotExist:
+                user_urls = []
+
+            try:
+                user_tech = ProfileResponse.make_tech_data(user.usertech.tech.decode())
+            except UserTech.DoesNotExist:
+                user_tech = []
+
             user_serializer = UserProfileSerializer(user)
 
-            return ProfileResponse.make_data(user_serializer.data, url, tech, owner_id)
+            return ProfileResponse.make_data(user_serializer.data, user_urls, user_tech, owner_id)
         except User.DoesNotExist:
             raise notfound_exception.UserNotFoundError()
 
@@ -58,6 +66,9 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         try:
             user_url = UserUrls.objects.get(user_id=user_id)
+            if url == "":
+                user_url.delete()
+                return {"urls": []}
             serializer = UserUrlSerializer(user_url, data={"url": url}, partial=True)
         except UserUrls.DoesNotExist:
             data = {"user_id": owner_id, "url": url}
@@ -75,6 +86,9 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         try:
             user_tech = UserTech.objects.get(user_id=user_id)
+            if tech == "":
+                user_tech.delete()
+                return {"tech": []}
             serializer = UserTechSerializer(user_tech, data={"tech": tech}, partial=True)
         except UserTech.DoesNotExist:
             data = {"user_id": owner_id, "tech": tech}

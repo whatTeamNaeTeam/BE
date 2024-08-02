@@ -5,13 +5,19 @@ class ProfileResponse:
 
     @staticmethod
     def make_url_data(url):
-        data = url.split(",")
-        return [{"url": url} for url in data]
+        try:
+            data = url.split(",")
+            return [{"url": url} for url in data]
+        except Exception:
+            return []
 
     @staticmethod
     def make_tech_data(tech):
-        data = tech.split(",")
-        return [{"name": name} for name in data]
+        try:
+            data = tech.split(",")
+            return [{"name": name} for name in data]
+        except Exception:
+            return []
 
     @staticmethod
     def make_activity_data(teams, user_id, owner_id):
