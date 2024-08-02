@@ -2,7 +2,7 @@ import core.exception.notfound as notfound_exception
 import core.exception.apply as apply_exception
 from core.service import BaseServiceWithCheckLeader
 from core.utils.team import ApplyResponse
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from team.models import TeamApply, Team, TeamTech, TeamUser
 from team.serializers import TeamApplySerializer
 
@@ -12,12 +12,18 @@ class ApplyService(BaseServiceWithCheckLeader):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id
         try:
-            team = Team.objects.get(id=team_id)
+            team = (
+                Team.objects.select_related("leader")
+                .prefetch_related(
+                    models.Prefetch("teamapply_set", queryset=TeamApply.objects.filter(is_approved=False))
+                )
+                .get(id=team_id)
+            )
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
 
-        queryset = TeamApply.objects.filter(team_id=team_id, is_approved=False)
+        queryset = team.teamapply_set.all()
 
         if queryset:
             serializer = TeamApplySerializer(queryset, many=True)
@@ -30,7 +36,7 @@ class ApplyService(BaseServiceWithCheckLeader):
         user_id = self.request.user.id
         tech_id = self.kwargs.get("team_id")
         try:
-            teamTech = TeamTech.objects.get(id=tech_id)
+            teamTech = TeamTech.objects.select_related("team").get(id=tech_id)
         except TeamTech.DoesNotExist:
             raise notfound_exception.TechNotFoundError()
 
@@ -52,13 +58,11 @@ class ApplyService(BaseServiceWithCheckLeader):
         apply_id = self.kwargs.get("team_id")
         user_id = self.request.user.id
         try:
-            apply = TeamApply.objects.get(id=apply_id)
-            team = Team.objects.get(id=apply.team_id)
+            apply = TeamApply.objects.select_related("team").get(id=apply_id)
+            team = apply.team
             team_tech = TeamTech.objects.get(team_id=team.id, tech=apply.tech)
         except TeamApply.DoesNotExist:
             raise notfound_exception.ApplyNotFoundError()
-        except Team.DoesNotExist:
-            raise notfound_exception.TeamNotFoundError()
         except TeamTech.DoesNotExist:
             raise notfound_exception.TechNotFoundError()
 
@@ -82,8 +86,8 @@ class ApplyService(BaseServiceWithCheckLeader):
         apply_id = self.kwargs.get("team_id")
         user_id = self.request.user.id
         try:
-            apply = TeamApply.objects.get(id=apply_id)
-            team = Team.objects.get(id=apply.team_id)
+            apply = TeamApply.objects.select_related("team", "team__leader").get(id=apply_id)
+            team = apply.team
         except TeamApply.DoesNotExist:
             raise notfound_exception.ApplyNotFoundError()
         except Team.DoesNotExist:
