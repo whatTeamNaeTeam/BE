@@ -22,13 +22,13 @@ class LikesManager(models.Manager):
 
 
 class TeamQuerySet(models.QuerySet):
-    def search_by_name(self, name):
-        return self.filter(Q(name__icontains=name), is_approved=True).order_by("id")
+    def search_by_name(self, title):
+        return self.filter(Q(title__icontains=title), is_approved=True).order_by("id")
 
     def search_by_genre(self, genre):
         return self.filter(Q(genre__icontains=genre), is_approved=True).order_by("id")
 
-    def search_by_leader(self, leader_ids):
+    def search_by_leader_ids(self, leader_ids):
         return self.filter(Q(leader_id__in=leader_ids), is_approved=True).order_by("id")
 
 
@@ -36,11 +36,11 @@ class TeamManager(models.Manager):
     def get_queryset(self):
         return TeamQuerySet(self.model, using=self._db)
 
-    def search_by_name(self, name):
-        return self.get_queryset().search_by_name(name=name)
+    def search_by_name(self, title):
+        return self.get_queryset().search_by_name(title=title)
 
     def search_by_genre(self, genre):
         return self.get_queryset().search_by_genre(genre=genre)
 
     def search_by_leader_ids(self, leader_ids):
-        return self.get_queryset().search_by_leader(leader_ids=leader_ids)
+        return self.get_queryset().search_by_leader_ids(leader_ids=leader_ids)

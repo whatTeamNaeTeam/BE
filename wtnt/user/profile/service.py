@@ -26,32 +26,14 @@ class ProfileService(BaseServiceWithCheckOwnership):
         owner_id = self.request.user.id
 
         try:
-            user = User.objects.get(id=user_id)
-            url = self.get_url_data(user_id)
-            tech = self.get_tech_data(user_id)
+            user = User.objects.select_related("userurls", "usertech").get(id=user_id)
+            url = ProfileResponse.make_url_data(user.userurls.url.decode())
+            tech = ProfileResponse.make_tech_data(user.usertech.tech.decode())
             user_serializer = UserProfileSerializer(user)
 
             return ProfileResponse.make_data(user_serializer.data, url, tech, owner_id)
         except User.DoesNotExist:
             raise notfound_exception.UserNotFoundError()
-
-    def get_url_data(self, user_id):
-        try:
-            url = UserUrls.objects.get(user_id=user_id)
-            response = UserUrlSerializer(url)
-        except UserUrls.DoesNotExist:
-            return None
-
-        return ProfileResponse.make_url_data(response.data)
-
-    def get_tech_data(self, user_id):
-        try:
-            tech = UserTech.objects.get(user_id=user_id)
-            response = UserTechSerializer(tech)
-        except UserTech.DoesNotExist:
-            return None
-
-        return ProfileResponse.make_tech_data(response.data)
 
     def update_user_info(self):
         user = self.request.user
@@ -83,7 +65,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            data = ProfileResponse.make_url_data(serializer.data)
+            data = ProfileResponse.make_url_data(serializer.data["url"])
             return data
 
     def update_tech_info(self):
@@ -100,7 +82,7 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            data = ProfileResponse.make_tech_data(serializer.data)
+            data = ProfileResponse.make_tech_data(serializer.data["tech"])
             return data
 
 
@@ -112,13 +94,21 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
 
         if keyword == "apply":
             team_ids = TeamApply.objects.filter(user_id=owner_id, is_approved=False).values_list("team_id", flat=True)
-            team_data = Team.objects.filter(id__in=team_ids)
+            team_data = Team.objects.filter(id__in=team_ids).select_related("leader").prefetch_related("category")
         else:
             team_ids = TeamUser.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
             if keyword == "accomplished":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+                team_data = (
+                    Team.objects.filter(id__in=team_ids, is_accomplished=True, is_approved=True)
+                    .select_related("leader")
+                    .prefetch_related("category")
+                )
             elif keyword == "inprogress":
-                team_data = Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+                team_data = (
+                    Team.objects.filter(id__in=team_ids, is_accomplished=False, is_approved=True)
+                    .select_related("leader")
+                    .prefetch_related("category")
+                )
             else:
                 raise team_exception.TeamKeywordNotMatchError()
 
@@ -132,7 +122,7 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
         owner_id = self.request.user.id
 
         like_team_ids = Likes.objects.filter(user_id=owner_id).values_list("team_id", flat=True)
-        team_data = Team.objects.filter(id__in=like_team_ids)
+        team_data = Team.objects.filter(id__in=like_team_ids).select_related("leader").prefetch_related("category")
         serializer = TeamListSerializer(team_data, many=True)
         data = TeamResponse.get_team_list_response(serializer.data, owner_id)
 
@@ -148,7 +138,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         team_ids = [team["team_id"] for team in team_users]
         member_counts = [team["member_count"] for team in team_users]
 
-        team_data = Team.objects.filter(id__in=team_ids)
+        team_data = Team.objects.filter(id__in=team_ids).select_related("leader")
         serializer = TeamManageActivitySerializer(team_data, many=True)
         data = TeamResponse.get_team_list_response(serializer.data, user_id, is_manage=True, count=member_counts)
 
@@ -174,7 +164,7 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
 
         try:
             team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
-            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id, user_id=user_id)
+            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id)
         except TeamUser.DoesNotExist:
             raise notfound_exception.TeamUserNotFoundError()
 
@@ -192,10 +182,11 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
 
-        member_id_tech = TeamUser.objects.filter(team_id=team_id).values_list("user_id", "tech")
-        member_id_tech_dict = {user_id: tech for user_id, tech in member_id_tech}
+        team_users = TeamUser.objects.filter(team_id=team_id).select_related("user")
+        member_id_tech_dict = {team_user.user.id: team_user.tech for team_user in team_users}
 
-        members = User.objects.filter(id__in=member_id_tech_dict.keys())
+        members = [team_user.user for team_user in team_users]
+
         serializer = UserSerializerOnTeamManageDetail(members, many=True)
         data = ProfileResponse.make_team_manage_detail_data(serializer.data, team, member_id_tech_dict)
 

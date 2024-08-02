@@ -37,7 +37,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         team_id = self.kwargs.get("team_id")
 
         try:
-            team = Team.objects.get(id=team_id)
+            team = Team.objects.prefetch_related("category").get(id=team_id)
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
@@ -66,7 +66,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         user_id = self.request.user.id if self.request.user.id else None
 
         try:
-            team = Team.objects.get(id=team_id)
+            team = Team.objects.select_related("leader").prefetch_related("category").get(id=team_id)
             redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
             if redis_ans:
                 team.view += 1
@@ -83,9 +83,19 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         keyword = self.request.query_params.get("keyword")
 
         if keyword == "inprogress":
-            queryset = Team.objects.filter(is_accomplished=False, is_approved=True).all()
+            queryset = (
+                Team.objects.filter(is_accomplished=False, is_approved=True)
+                .select_related("leader")
+                .prefetch_related("category")
+                .all()
+            )
         elif keyword == "accomplished":
-            queryset = Team.objects.filter(is_accomplished=True, is_approved=True).all()
+            queryset = (
+                Team.objects.filter(is_accomplished=True, is_approved=True)
+                .select_related("leader")
+                .prefetch_related("category")
+                .all()
+            )
         else:
             raise team_exception.TeamKeywordNotMatchError()
 

@@ -14,12 +14,11 @@ User = get_user_model()
 
 class AdminTeamService(BaseService, ListPagenationSize10):
     def get_not_approved_team(self):
-        try:
-            queryset = Team.objects.filter(is_approved=False)
+        queryset = Team.objects.filter(is_approved=False).select_related("leader")
+        if queryset:
             serializer = ApproveTeamSerializer(queryset, many=True)
             return serializer.data
-
-        except Team.DoesNotExist:
+        else:
             raise notfound_exception.TeamNotFoundError()
 
     def approve_teams(self):
@@ -35,7 +34,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         teams = Team.objects.filter(id__in=team_ids, is_approved=status)
         if status:
             for team in teams:
-                S3Utils.delete_team_image_on_s3(team.title)
+                S3Utils.delete_team_image_on_s3(team.uuid)
         cnt, _ = teams.delete()
         if cnt:
             return {"detail": "Success to reject teams"}
@@ -43,7 +42,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
             raise notfound_exception.TeamNotFoundError()
 
     def get_approved_teams(self):
-        queryset = Team.objects.filter(is_approved=True).order_by("id")
+        queryset = Team.objects.filter(is_approved=True).order_by("id").select_related("leader")
         paginated = self.paginate_queryset(queryset, self.request, view=self)
         serializer = ApproveTeamSerializer(paginated, many=True)
 
@@ -53,13 +52,13 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         keyword = self.request.query_params.get("keyword")
         search_filter = self.request.query_params.get("filter")
 
-        if search_filter == "name":
-            queryset = Team.objects.search_by_name(name=keyword)
+        if search_filter == "title":
+            queryset = Team.objects.select_related("leader").search_by_name(title=keyword)
         elif search_filter == "genre":
-            queryset = Team.objects.search_by_genre(genre=keyword)
+            queryset = Team.objects.select_related("leader").search_by_genre(genre=keyword)
         elif search_filter == "leader":
             leader_ids = User.objects.search_by_name(name=keyword).values_list("id", flat=True)
-            queryset = Team.objects.search_by_leader_ids(leader_ids=leader_ids)
+            queryset = Team.objects.select_related("leader").search_by_leader_ids(leader_ids=leader_ids)
         else:
             raise team_exception.TeamKeywordNotMatchError()
 
@@ -79,10 +78,10 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
 
-        member_id_tech = TeamUser.objects.filter(team_id=team_id).values_list("user_id", "tech")
-        member_id_tech_dict = {user_id: tech for user_id, tech in member_id_tech}
+        team_users = TeamUser.objects.filter(team_id=team_id).select_related("user")
+        member_id_tech_dict = {team_user.user.id: team_user.tech for team_user in team_users}
 
-        members = User.objects.filter(id__in=member_id_tech_dict.keys())
+        members = [team_user.user for team_user in team_users]
         serializer = AdminTeamManageDetailSerializer(members, many=True)
 
         data = TeamResponse.make_team_manage_detail_data(serializer.data, team, member_id_tech_dict)

@@ -5,13 +5,11 @@ class ProfileResponse:
 
     @staticmethod
     def make_url_data(url):
-        url = url["url"]
         data = url.split(",")
         return [{"url": url} for url in data]
 
     @staticmethod
     def make_tech_data(tech):
-        tech = tech["tech"]
         data = tech.split(",")
         return [{"name": name} for name in data]
 
@@ -25,10 +23,13 @@ class ProfileResponse:
 
         for i, member in enumerate(members):
             if member["id"] == leader_id:
-                leader_info = members.pop(i)
+                leader_key = i
+                leader_info = member
                 leader_info["category"] = _dict[leader_info["id"]]
-                break
+                continue
             member["category"] = _dict[member["id"]]
+
+        del members[leader_key]
 
         return {
             "title": team.title,
