@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 import core.exception.team as team_exception
 import core.exception.notfound as notfound_exception
 from core.pagenations import TeamPagination
@@ -61,22 +63,32 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             serializer.save()
             return TeamResponse.get_detail_response(serializer.data, user_id)
 
+    def get_team_data_from_id(self, team_id):
+        try:
+            team = Team.objects.select_related("leader").prefetch_related("category").get(id=team_id)
+            serializer = TeamCreateSerializer(team)
+            return serializer.data
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
+
     def get_team_detail(self):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id if self.request.user.id else None
+        cache_key = f"team_detail_{team_id}"
+        team = cache.get(cache_key)
+        redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
 
-        try:
-            team = Team.objects.select_related("leader").prefetch_related("category").get(id=team_id)
-            redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
+        if team is None:
+            team = self.get_team_data_from_id(team_id)
             if redis_ans:
-                team.view += 1
-                team.save()
-            serializer = TeamCreateSerializer(team)
+                team["view"] += 1
+            cache.set(cache_key, team, timeout=60 * 10)
+        else:
+            if redis_ans:
+                team["view"] += 1
+                cache.set(cache_key, team, timeout=60 * 10)
 
-            return TeamResponse.get_detail_response(serializer.data, user_id)
-
-        except Team.DoesNotExist:
-            raise notfound_exception.TeamNotFoundError()
+        return TeamResponse.get_detail_response(team, user_id)
 
     def get_paginated_team_list(self):
         user_id = self.request.user.id
