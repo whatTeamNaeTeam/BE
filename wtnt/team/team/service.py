@@ -75,18 +75,19 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id if self.request.user.id else None
         cache_key = f"team_detail_{team_id}"
+
         team = cache.get(cache_key)
+
         redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
 
         if team is None:
             team = self.get_team_data_from_id(team_id)
-            if redis_ans:
-                team["view"] += 1
-            cache.set(cache_key, team, timeout=60 * 10)
-        else:
-            if redis_ans:
-                team["view"] += 1
-                cache.set(cache_key, team, timeout=60 * 10)
+
+        if redis_ans:
+            team["view"] += 1
+            RedisUtils.sadd_view_update_list(team_id)
+
+        cache.set(cache_key, team, timeout=60 * 10)
 
         return TeamResponse.get_detail_response(team, user_id)
 
