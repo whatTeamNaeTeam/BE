@@ -82,12 +82,17 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         if team is None:
             team = self.get_team_data_from_id(team_id)
+            cache_update = True
+        else:
+            cache_update = False
 
         if redis_ans:
             team["view"] += 1
             RedisUtils.sadd_view_update_list(team_id)
+            cache_update = True
 
-        cache.set(cache_key, team, timeout=60 * 10)
+        if cache_update:
+            cache.set(cache_key, team, timeout=60 * 10)
 
         return TeamResponse.get_detail_response(team, user_id)
 
