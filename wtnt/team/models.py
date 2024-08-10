@@ -24,21 +24,6 @@ class Team(TimestampedModel):
     is_accomplished = models.BooleanField(default=False)
     objects = TeamManager()
 
-    def clean(self):
-        if Team.objects.filter(title=self.title).exclude(pk=self.pk).exists():
-            raise exception.TeamNameDuplicateError()
-
-        if not (0 < len(self.title) <= 30):
-            raise exception.TeamNameLengthError()
-
-        valid_genres = ["웹", "앱", "게임"]
-        if self.genre not in valid_genres:
-            raise exception.TeamGenreNotValidError()
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-
 
 class TeamApply(TimestampedModel):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
