@@ -68,7 +68,21 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            return {"explain": explain, "position": position, "image_url": url + "image.jpg"}
+
+            cache_key = f"user_profile_{user.id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["profile"]["explain"] = explain
+                cached_data["profile"]["position"] = position
+                if url is not None:
+                    cached_data["profile"]["image_url"] = url + "image.jpg"
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
+            return {
+                "explain": explain,
+                "position": position,
+                **({"image_url": url + "image.jpg"} if url is not None else {}),
+            }
 
     def update_user_url_info(self):
         owner_id = self.kwargs.get("user_id")
@@ -88,6 +102,13 @@ class ProfileService(BaseServiceWithCheckOwnership):
         if serializer.is_valid():
             serializer.save()
             data = ProfileResponse.make_url_data(serializer.data["url"])
+
+            cache_key = f"user_profile_{user_id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["url"] = data
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
             return data
 
     def update_tech_info(self):
@@ -108,6 +129,13 @@ class ProfileService(BaseServiceWithCheckOwnership):
         if serializer.is_valid():
             serializer.save()
             data = ProfileResponse.make_tech_data(serializer.data["tech"])
+
+            cache_key = f"user_profile_{user_id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["tech"] = data
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
             return data
 
 
