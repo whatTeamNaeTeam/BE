@@ -60,10 +60,6 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
         if is_empty_value:
             return data
 
-        team_data = {key: value for key, value in data.items() if key != "category"}
-        instance = Team(**team_data)
-        instance.clean()
-
         value = self.to_internal_value(data)
         self.run_validators(value)
         value = self.validate(value)
@@ -73,6 +69,20 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
     def validate(self, data):
         url = data.get("url", None)
         explain = data.get("explain", None)
+
+        if self.instance and self.instance.pk:
+            if Team.objects.filter(title=self.instance.title).exclude(pk=self.instance.pk).exists():
+                raise exception.TeamNameDuplicateError()
+        else:
+            if Team.objects.filter(title=data.get("title")).exists():
+                raise exception.TeamNameDuplicateError()
+
+        if not (0 < len(data.get("title")) <= 30):
+            raise exception.TeamNameLengthError()
+
+        valid_genres = ["웹", "앱", "게임"]
+        if data.get("genre") not in valid_genres:
+            raise exception.TeamGenreNotValidError()
 
         if explain is not None and not (0 < len(explain.decode()) <= 2000):
             raise exception.TeamExplainLengthError()

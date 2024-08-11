@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count
+from django.core.cache import cache
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -21,10 +22,7 @@ User = get_user_model()
 
 
 class ProfileService(BaseServiceWithCheckOwnership):
-    def process_response_data(self):
-        user_id = self.kwargs.get("user_id")
-        owner_id = self.request.user.id
-
+    def get_profile_data_from_id(self, user_id):
         try:
             user = User.objects.select_related("userurls", "usertech").get(id=user_id)
             try:
@@ -39,9 +37,22 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
             user_serializer = UserProfileSerializer(user)
 
-            return ProfileResponse.make_data(user_serializer.data, user_urls, user_tech, owner_id)
+            return ProfileResponse.make_cached_data(user_serializer.data, user_urls, user_tech)
         except User.DoesNotExist:
             raise notfound_exception.UserNotFoundError()
+
+    def process_response_data(self):
+        user_id = self.kwargs.get("user_id")
+        owner_id = self.request.user.id
+        cache_key = f"user_profile_{user_id}"
+
+        user_data = cache.get(cache_key)
+
+        if user_data is None:
+            user_data = self.get_profile_data_from_id(user_id)
+            cache.set(cache_key, user_data, timeout=60 * 5)
+
+        return ProfileResponse.make_data(user_data, owner_id)
 
     def update_user_info(self):
         user = self.request.user
@@ -57,7 +68,21 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
         if serializer.is_valid():
             serializer.save()
-            return {"explain": explain, "position": position, "image_url": url + "image.jpg"}
+
+            cache_key = f"user_profile_{user.id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["profile"]["explain"] = explain
+                cached_data["profile"]["position"] = position
+                if url is not None:
+                    cached_data["profile"]["image_url"] = url + "image.jpg"
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
+            return {
+                "explain": explain,
+                "position": position,
+                **({"image_url": url + "image.jpg"} if url is not None else {}),
+            }
 
     def update_user_url_info(self):
         owner_id = self.kwargs.get("user_id")
@@ -77,6 +102,13 @@ class ProfileService(BaseServiceWithCheckOwnership):
         if serializer.is_valid():
             serializer.save()
             data = ProfileResponse.make_url_data(serializer.data["url"])
+
+            cache_key = f"user_profile_{user_id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["url"] = data
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
             return data
 
     def update_tech_info(self):
@@ -97,6 +129,13 @@ class ProfileService(BaseServiceWithCheckOwnership):
         if serializer.is_valid():
             serializer.save()
             data = ProfileResponse.make_tech_data(serializer.data["tech"])
+
+            cache_key = f"user_profile_{user_id}"
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                cached_data["tech"] = data
+                cache.set(cache_key, cached_data, timeout=60 * 5)
+
             return data
 
 

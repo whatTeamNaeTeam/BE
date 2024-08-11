@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 import core.exception.team as team_exception
 import core.exception.notfound as notfound_exception
 from core.pagenations import TeamPagination
@@ -59,24 +61,41 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         if serializer.is_valid():
             serializer.save()
+            cache.set(f"team_detail_{team_id}", serializer.data, timeout=60 * 10)
             return TeamResponse.get_detail_response(serializer.data, user_id)
+
+    def get_team_data_from_id(self, team_id):
+        try:
+            team = Team.objects.select_related("leader").prefetch_related("category").get(id=team_id)
+            serializer = TeamCreateSerializer(team)
+            return serializer.data
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
 
     def get_team_detail(self):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id if self.request.user.id else None
+        cache_key = f"team_detail_{team_id}"
 
-        try:
-            team = Team.objects.select_related("leader").prefetch_related("category").get(id=team_id)
-            redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
-            if redis_ans:
-                team.view += 1
-                team.save()
-            serializer = TeamCreateSerializer(team)
+        team = cache.get(cache_key)
 
-            return TeamResponse.get_detail_response(serializer.data, user_id)
+        redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
 
-        except Team.DoesNotExist:
-            raise notfound_exception.TeamNotFoundError()
+        if team is None:
+            team = self.get_team_data_from_id(team_id)
+            cache_update = True
+        else:
+            cache_update = False
+
+        if redis_ans:
+            team["view"] += 1
+            RedisUtils.sadd_view_update_list(team_id)
+            cache_update = True
+
+        if cache_update:
+            cache.set(cache_key, team, timeout=60 * 10)
+
+        return TeamResponse.get_detail_response(team, user_id)
 
     def get_paginated_team_list(self):
         user_id = self.request.user.id

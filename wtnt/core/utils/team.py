@@ -78,7 +78,7 @@ class TeamResponse:
         return {
             "team": team_data,
             "is_leader": TeamResponse.is_leader(leader_id, user_id),
-            "is_like": TeamResponse.is_like(team_id, user_id),
+            "is_like": False if user_id is None else TeamResponse.is_like(team_id, user_id),
         }
 
 

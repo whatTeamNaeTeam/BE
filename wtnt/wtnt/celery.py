@@ -11,7 +11,8 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    "delete-view-history-per-day": {"task": "team.tasks.delete_view_history", "schedule": crontab(minute=0, hour=0)}
+    "delete-view-history-per-day": {"task": "team.tasks.delete_view_history", "schedule": crontab(minute=0, hour=0)},
+    "update-view-count-per-5-minutes": {"task": "team.tasks.update_view_count", "schedule": crontab(minute="*/5")},
 }
 
 

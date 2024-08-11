@@ -16,6 +16,11 @@ class RedisUtils:
         return cls.client.sadd(f"views:{team_id}", f"{user_id}_{adress}")
 
     @classmethod
+    def sadd_view_update_list(cls, team_id):
+        RedisUtils.init()
+        cls.client.sadd("view_updated", f"{team_id}")
+
+    @classmethod
     def set_refresh_token(cls, user_id, refresh_token):
         RedisUtils.init()
         ttl_seconds = timedelta(days=7).total_seconds()
