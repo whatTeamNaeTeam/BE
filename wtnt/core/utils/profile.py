@@ -1,7 +1,12 @@
 class ProfileResponse:
     @staticmethod
-    def make_data(user, url, tech, owner_id):
-        return {"profile": user, "url": url, "tech": tech, "is_owner": user["id"] == owner_id}
+    def make_cached_data(user, url, tech):
+        return {"profile": user, "url": url, "tech": tech}
+
+    @staticmethod
+    def make_data(data, owner_id):
+        data["is_owner"] = data["profile"]["id"] == owner_id
+        return data
 
     @staticmethod
     def make_url_data(url):
