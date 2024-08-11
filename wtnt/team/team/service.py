@@ -61,6 +61,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
 
         if serializer.is_valid():
             serializer.save()
+            cache.set(f"team_detail_{team_id}", serializer.data, timeout=60 * 10)
             return TeamResponse.get_detail_response(serializer.data, user_id)
 
     def get_team_data_from_id(self, team_id):
