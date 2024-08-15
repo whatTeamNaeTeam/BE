@@ -218,10 +218,12 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         try:
             team_user = TeamUser.objects.get(team_id=team_id, user_id=user_id)
             team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id)
+            team_apply = TeamApply.objects.get(team_id=team_id, user_id=user_id, tech=team_user.tech)
         except TeamUser.DoesNotExist:
             raise notfound_exception.TeamUserNotFoundError()
 
         team_user.delete()
+        team_apply.delete()
         team_tech.current_num -= 1
         team_tech.save()
 
@@ -244,3 +246,27 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
         data = ProfileResponse.make_team_manage_detail_data(serializer.data, team, member_id_tech_dict)
 
         return data
+
+    def ban_user_from_team(self):
+        team_id = self.kwargs.get("team_id")
+        user_id = self.request.user.id
+
+        team = Team.objects.select_related("leader").get(id=team_id)
+
+        self.check_leader(user_id, team.leader.id)
+
+        ban_user_id = self.request.data.get("ban_user")
+
+        try:
+            team_user = TeamUser.objects.get(team_id=team_id, user_id=ban_user_id)
+            team_tech = TeamTech.objects.get(tech=team_user.tech, team_id=team_id)
+            team_apply = TeamApply.objects.get(team_id=team_id, user_id=ban_user_id, tech=team_user.tech)
+        except TeamUser.DoesNotExist:
+            raise notfound_exception.TeamUserNotFoundError()
+
+        team_user.delete()
+        team_apply.delete()
+        team_tech.current_num -= 1
+        team_tech.save()
+
+        return {"detail": f"Success to ban user from {team.title}"}
