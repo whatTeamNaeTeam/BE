@@ -26,10 +26,8 @@ def update_view_count():
     client.delete("view_updated")
     team_ids = {int(team_id.decode("utf-8")) for team_id in team_ids}
     teams = Team.objects.filter(id__in=list(team_ids))
-    print(team_ids)
-    print(teams)
+    print(f"업데이트 게시물 수 : {len(teams)}")
     for team in teams:
-        print(f"key: :1:team_detail_{team.id}")
         cached_team = pickle.loads(client.get(f":1:team_detail_{team.id}"))
         team.view = cached_team["view"]
 
