@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -23,6 +24,10 @@ class AdminUserService(BaseService, UserListPagenationSize10):
         user_ids = [int(id) for id in self.request.data.get("ids").split(",")]
         cnt = User.objects.filter(id__in=user_ids).update(is_approved=True)
         if cnt:
+            cache_count = cache.get("cache_count_user")
+            if cache_count:
+                cache_count += cnt
+                cache.set("cache_count_user", cache_count, timeout=60 * 5)
             return {"detail": "Success to update users"}
         else:
             raise notfound_exception.UserNotFoundError()
