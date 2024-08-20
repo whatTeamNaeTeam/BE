@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
-from core.pagenations import ListPagenationSize10
+from core.pagenations import UserListPagenationSize10
 from core.service import BaseService
 from core.utils.s3 import S3Utils
 from admin.serializers import ApproveUserSerializer
@@ -10,7 +10,7 @@ from admin.serializers import ApproveUserSerializer
 User = get_user_model()
 
 
-class AdminUserService(BaseService, ListPagenationSize10):
+class AdminUserService(BaseService, UserListPagenationSize10):
     def get_not_approved_users(self):
         queryset = User.objects.filter(is_approved=False, is_superuser=False)
         if queryset:
@@ -61,7 +61,7 @@ class AdminUserService(BaseService, ListPagenationSize10):
         if not queryset:
             raise notfound_exception.UserNotFoundError()
 
-        paginated = self.paginate_queryset(queryset, self.request, view=self)
+        paginated = self.paginate_queryset(queryset, self.request, view=self, is_search=True)
         serializer = ApproveUserSerializer(paginated, many=True)
 
         return self.get_paginated_response(serializer.data)
