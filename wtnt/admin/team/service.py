@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -26,6 +27,11 @@ class AdminTeamService(BaseService, TeamListPagenationSize10):
         cnt = Team.objects.filter(id__in=team_ids).update(is_approved=True)
 
         if cnt:
+            cache_count = cache.get("cache_count_team")
+            if cache_count:
+                cache_count += cnt
+                cache.set("cache_count_team", cache_count, timeout=60 * 5)
+
             return {"detail": "Success to update teams"}
         else:
             raise notfound_exception.TeamNotFoundError()
