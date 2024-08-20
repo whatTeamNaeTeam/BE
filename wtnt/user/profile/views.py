@@ -113,6 +113,12 @@ class UserManageActivityDetailView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+    def delete(self, request, *args, **kwargs):
+        myteam_service = MyTeamManageService(request, **kwargs)
+        data = myteam_service.ban_user_from_team()
+
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
+
 
 class UserLikeTeamView(APIView):
     permission_classes = [IsApprovedUser]
