@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
 from admin.serializers import ApproveTeamSerializer, AdminTeamManageDetailSerializer
-from core.pagenations import ListPagenationSize10
+from core.pagenations import TeamListPagenationSize10
 from core.service import BaseService
 from core.utils.s3 import S3Utils
 from core.utils.admin import TeamResponse
@@ -12,7 +12,7 @@ from team.models import Team, TeamUser
 User = get_user_model()
 
 
-class AdminTeamService(BaseService, ListPagenationSize10):
+class AdminTeamService(BaseService, TeamListPagenationSize10):
     def get_not_approved_team(self):
         queryset = Team.objects.filter(is_approved=False).select_related("leader")
         if queryset:
@@ -24,6 +24,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
     def approve_teams(self):
         team_ids = [int(id) for id in self.request.data.get("ids").split(",")]
         cnt = Team.objects.filter(id__in=team_ids).update(is_approved=True)
+
         if cnt:
             return {"detail": "Success to update teams"}
         else:
@@ -65,7 +66,7 @@ class AdminTeamService(BaseService, ListPagenationSize10):
         if not queryset:
             raise notfound_exception.TeamNotFoundError()
 
-        paginated = self.paginate_queryset(queryset, self.request, view=self)
+        paginated = self.paginate_queryset(queryset, self.request, view=self, is_search=True)
         serializer = ApproveTeamSerializer(paginated, many=True)
 
         return self.get_paginated_response(serializer.data)
