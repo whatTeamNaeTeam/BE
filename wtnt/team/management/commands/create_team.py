@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
         team_ids = seeder.execute()[Team]
 
-        for team_id, user in zip(team_ids, leaders):
+        for team_id, user in zip(team_ids, leader_cycle):
             team = Team.objects.get(pk=team_id)
             seeder.add_entity(
                 TeamUser,

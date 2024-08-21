@@ -4,6 +4,7 @@ from django.core.cache import cache
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
+import core.exception.permissions as permission_exception
 from core.service import BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader
 from user.models import UserUrls, UserTech
 from team.models import Team, TeamApply, TeamUser, Likes, TeamTech
@@ -239,6 +240,9 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
 
         team_users = TeamUser.objects.filter(team_id=team_id).select_related("user")
         member_id_tech_dict = {team_user.user.id: team_user.tech for team_user in team_users}
+
+        if self.request.user.id not in member_id_tech_dict:
+            raise permission_exception.IsNotInTeam()
 
         members = [team_user.user for team_user in team_users]
 
