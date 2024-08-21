@@ -59,3 +59,13 @@ class TeamListView(APIView):
     def get(self, request):
         team_service = TeamService(request)
         return team_service.get_paginated_team_list()
+
+
+class LeaderCheckView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        team_service = TeamService(request, **kwargs)
+        data = team_service.leader_check_service()
+
+        return Response(data, status=status.HTTP_200_OK)

@@ -125,3 +125,14 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
             return self.get_paginated_response(data)
         else:
             raise notfound_exception.TeamNotFoundError()
+
+    def leader_check_service(self):
+        team_id = self.kwargs.get("team_id")
+        user_id = self.request.user.id
+
+        team = Team.objects.select_related("leader").get(pk=team_id)
+
+        if user_id == team.leader.id:
+            return {"is_leader": True}
+        else:
+            return {"is_leader": False}
