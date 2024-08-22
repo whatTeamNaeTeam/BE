@@ -51,7 +51,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
         ]
 
     def get_image_url(self, obj):
-        return obj.image + "image.jpg"
+        return obj.image + "/image.jpg"
 
     from rest_framework.fields import empty
 
