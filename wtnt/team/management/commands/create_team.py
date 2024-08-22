@@ -59,7 +59,7 @@ class Command(BaseCommand):
                 "url": lambda x: faker.url().encode(),
                 "is_approved": True,
                 "is_accomplished": False,
-                "image": f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/default",
+                "image": f"https://{settings.BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/default/",
             },
         )
 
