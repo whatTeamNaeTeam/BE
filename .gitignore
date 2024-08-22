@@ -6,3 +6,4 @@ celerybeat-schedule.bak
 celerybeat-schedule.dir
 celerybeat-schedule.dat
 celerybeat-schedule.db
+logs/
