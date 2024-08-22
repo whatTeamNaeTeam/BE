@@ -1,5 +1,6 @@
 from django.core.cache import cache
 
+import wtnt.settings as api_settings
 import core.exception.team as team_exception
 import core.exception.notfound as notfound_exception
 from core.pagenations import TeamPagination
@@ -78,8 +79,12 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         cache_key = f"team_detail_{team_id}"
 
         team = cache.get(cache_key)
+        if api_settings.DEBUG:
+            user_ip = self.request.META.get("REMOTE_ADDR")
+        else:
+            user_ip = self.request.META.get("HTTP_X_REAL_IP")
 
-        redis_ans = RedisUtils.sadd_view_client(team_id, user_id, self.request.META.get("REMOTE_ADDR"))
+        redis_ans = RedisUtils.sadd_view_client(team_id, user_id, user_ip)
 
         if team is None:
             team = self.get_team_data_from_id(team_id)
