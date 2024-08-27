@@ -18,7 +18,7 @@ class AdminUserService(BaseService, UserListPagenationSize10):
             serializer = ApproveUserSerializer(queryset, many=True)
             return serializer.data
 
-        raise notfound_exception.UserNotFoundError()
+        return []
 
     def approve_users(self):
         user_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -62,9 +62,6 @@ class AdminUserService(BaseService, UserListPagenationSize10):
             queryset = User.objects.search_by_position(position=keyword)
         else:
             raise team_exception.TeamKeywordNotMatchError()
-
-        if not queryset:
-            raise notfound_exception.UserNotFoundError()
 
         paginated = self.paginate_queryset(queryset, self.request, view=self, is_search=True)
         serializer = ApproveUserSerializer(paginated, many=True)

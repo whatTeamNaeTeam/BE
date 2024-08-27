@@ -29,7 +29,7 @@ class ApplyService(BaseServiceWithCheckLeader):
             serializer = TeamApplySerializer(queryset, many=True)
             return serializer.data
         else:
-            raise notfound_exception.ApplyNotFoundError()
+            return []
 
     def post_apply(self):
         bio = self.request.data.get("bio", "열심히 하겠습니다!")

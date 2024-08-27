@@ -20,7 +20,7 @@ class AdminTeamService(BaseService, TeamListPagenationSize10):
             serializer = ApproveTeamSerializer(queryset, many=True)
             return serializer.data
         else:
-            raise notfound_exception.TeamNotFoundError()
+            return []
 
     def approve_teams(self):
         team_ids = [int(id) for id in self.request.data.get("ids").split(",")]
@@ -68,9 +68,6 @@ class AdminTeamService(BaseService, TeamListPagenationSize10):
             queryset = Team.objects.select_related("leader").search_by_leader_ids(leader_ids=leader_ids)
         else:
             raise team_exception.TeamKeywordNotMatchError()
-
-        if not queryset:
-            raise notfound_exception.TeamNotFoundError()
 
         paginated = self.paginate_queryset(queryset, self.request, view=self, is_search=True)
         serializer = ApproveTeamSerializer(paginated, many=True)

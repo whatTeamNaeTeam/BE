@@ -123,13 +123,10 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         else:
             raise team_exception.TeamKeywordNotMatchError()
 
-        if queryset:
-            paginated = self.paginate_queryset(queryset, self.request, view=self)
-            serializer = TeamListSerializer(paginated, many=True)
-            data = TeamResponse.get_team_list_response(serializer.data, user_id)
-            return self.get_paginated_response(data)
-        else:
-            raise notfound_exception.TeamNotFoundError()
+        paginated = self.paginate_queryset(queryset, self.request, view=self)
+        serializer = TeamListSerializer(paginated, many=True)
+        data = TeamResponse.get_team_list_response(serializer.data, user_id)
+        return self.get_paginated_response(data)
 
     def leader_check_service(self):
         team_id = self.kwargs.get("team_id")
