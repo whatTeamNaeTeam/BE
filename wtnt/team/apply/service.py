@@ -15,7 +15,9 @@ class ApplyService(BaseServiceWithCheckLeader):
             team = (
                 Team.objects.select_related("leader")
                 .prefetch_related(
-                    models.Prefetch("teamapply_set", queryset=TeamApply.objects.filter(is_approved=False))
+                    models.Prefetch(
+                        "teamapply_set", queryset=TeamApply.objects.filter(is_approved=False).select_related("user")
+                    )
                 )
                 .get(id=team_id)
             )

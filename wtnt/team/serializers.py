@@ -128,11 +128,19 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
 
 class TeamApplySerializer(serializers.ModelSerializer):
     team_id = serializers.IntegerField()
-    user_id = serializers.IntegerField()
+    user_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TeamApply
-        fields = ["id", "team_id", "user_id", "created_at", "bio", "tech"]
+        fields = ["id", "team_id", "created_at", "bio", "tech", "user_info"]
+
+    def get_user_info(self, obj):
+        return {
+            "id": obj.user.id,
+            "name": obj.user.name,
+            "image_url": obj.user.image + "thumnail.jpg",
+            "position": obj.user.position,
+        }
 
 
 class TeamListSerializer(LeaderInfoIncludedSerializer):
