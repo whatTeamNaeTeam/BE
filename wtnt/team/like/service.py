@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
 from core.service import BaseService
@@ -12,11 +14,21 @@ class LikeService(BaseService):
         team_id = self.kwargs.get("team_id")
         version = self.request.data.get("version")
 
+        cache_key = f"team_detail_{team_id}"
+        team_cache = cache.get(cache_key)
+
+        if team_cache is not None:
+            cache_update = True
+
         try:
             team = Team.objects.get(id=team_id)
             like = Likes.objects.get(team_id=team_id, user_id=user_id)
             if version == team.version:
                 like.delete()
+                if cache_update:
+                    team_cache["like"] -= 1
+                    team_cache["version"] += 1
+                    cache.set(cache_key, team_cache, timeout=60 * 10)
                 team.like -= 1
                 team.version += 1
                 team.save()
@@ -33,6 +45,10 @@ class LikeService(BaseService):
                 serializer = TeamLikeSerializer(data={"team_id": team_id, "user_id": user_id})
                 if serializer.is_valid():
                     serializer.save()
+                    if cache_update:
+                        team_cache["like"] += 1
+                        team_cache["version"] += 1
+                        cache.set(cache_key, team_cache, timeout=60 * 10)
                     team.like += 1
                     team.version += 1
                     team.save()
