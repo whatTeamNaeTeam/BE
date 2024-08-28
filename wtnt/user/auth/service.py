@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
+
+import wtnt.settings as api_settings
+
 from core.utils.redis import RedisUtils
 from core.service import BaseService
 import core.exception.login as login_exception
@@ -17,11 +20,17 @@ class AuthService(BaseService):
     def determine_callback_url(self):
         is_web = self.request.META.get("HTTP_X_FROM", None)
         if is_web == "web":
-            return "https://local.whatmeow.shop:3001/oauth/callback/github"
+            if api_settings.DEBUG:
+                return "https://local.whatmeow.shop:3001/oauth/callback/github"
+            else:
+                return "https://test.whatmeow.shop/oauth/callback/github"
         elif is_web == "app":
             return "myapp://auth"
         else:
-            return "http://localhost:8000/api/auth/github/callback"
+            if api_settings.DEBUG:
+                return "http://localhost:8000/api/auth/github/callback"
+            else:
+                return "https://api.whatmeow.shop/api/auth/github/callback"
 
     def process_response_data(self, response_data):
         refresh_token = response_data.get("refresh", None)
