@@ -135,3 +135,14 @@ class UserLikeTeamView(APIView):
         data = myactivity_service.get_like_activity()
 
         return Response({"team": data}, status=status.HTTP_200_OK)
+
+
+class NotApprovedTeamView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        myactivity_service = MyActivityServcie(request, **kwargs)
+        myactivity_service.check_ownership()
+        data = myactivity_service.get_not_approved_team()
+
+        return Response({"team": data}, status=status.HTTP_200_OK)

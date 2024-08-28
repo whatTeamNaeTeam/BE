@@ -182,6 +182,15 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
 
         return data
 
+    def get_not_approved_team(self):
+        owner_id = self.request.user.id
+        team_data = Team.objects.filter(leader_id=owner_id, is_approved=False)
+        serializer = TeamListSerializer(team_data, many=True)
+
+        data = TeamResponse.get_team_list_response(serializer.data, owner_id)
+
+        return data
+
 
 class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader):
     def get_my_teams(self):
