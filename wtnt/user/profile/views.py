@@ -113,6 +113,12 @@ class UserManageActivityDetailView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+    def patch(self, request, *args, **kwargs):
+        myteam_service = MyTeamManageService(request, **kwargs)
+        data = myteam_service.finish_project()
+
+        return Response(data, status=status.HTTP_202_ACCEPTED)
+
     def delete(self, request, *args, **kwargs):
         myteam_service = MyTeamManageService(request, **kwargs)
         data = myteam_service.ban_user_from_team()
@@ -127,5 +133,16 @@ class UserLikeTeamView(APIView):
         myactivity_service = MyActivityServcie(request, **kwargs)
         myactivity_service.check_ownership()
         data = myactivity_service.get_like_activity()
+
+        return Response({"team": data}, status=status.HTTP_200_OK)
+
+
+class NotApprovedTeamView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request, *args, **kwargs):
+        myactivity_service = MyActivityServcie(request, **kwargs)
+        myactivity_service.check_ownership()
+        data = myactivity_service.get_not_approved_team()
 
         return Response({"team": data}, status=status.HTTP_200_OK)

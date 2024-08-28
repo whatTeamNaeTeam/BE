@@ -26,6 +26,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
     view = serializers.IntegerField(read_only=True)
     image = serializers.CharField(write_only=True)
     uuid = serializers.UUIDField(write_only=True)
+    is_approved = serializers.BooleanField(read_only=True)
     leader_id = serializers.IntegerField(write_only=True)
     image_url = serializers.SerializerMethodField()
     explain = BinaryField()
@@ -48,6 +49,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
             "url",
             "category",
             "uuid",
+            "is_approved",
         ]
 
     def get_image_url(self, obj):
@@ -80,7 +82,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
         if not (0 < len(data.get("title")) <= 30):
             raise exception.TeamNameLengthError()
 
-        valid_genres = ["웹", "앱", "게임"]
+        valid_genres = ["웹", "안드로이드", "IOS", "크로스플랫폼", "게임", "기타"]
         if data.get("genre") not in valid_genres:
             raise exception.TeamGenreNotValidError()
 
@@ -147,11 +149,24 @@ class TeamApplySerializer(serializers.ModelSerializer):
 class TeamListSerializer(LeaderInfoIncludedSerializer):
     category = TeamTechCreateSerializer(many=True, read_only=True)
     image = serializers.CharField(write_only=True)
+    is_approved = serializers.BooleanField(read_only=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id", "title", "image", "image_url", "category", "leader_info", "like", "version", "view", "genre"]
+        fields = [
+            "id",
+            "title",
+            "image",
+            "image_url",
+            "category",
+            "leader_info",
+            "like",
+            "version",
+            "view",
+            "genre",
+            "is_approved",
+        ]
 
     def get_image_url(self, obj):
         return obj.image + "thumnail.jpg"

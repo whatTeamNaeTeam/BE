@@ -182,6 +182,15 @@ class MyActivityServcie(BaseServiceWithCheckOwnership):
 
         return data
 
+    def get_not_approved_team(self):
+        owner_id = self.request.user.id
+        team_data = Team.objects.filter(leader_id=owner_id, is_approved=False)
+        serializer = TeamListSerializer(team_data, many=True)
+
+        data = TeamResponse.get_team_list_response(serializer.data, owner_id)
+
+        return data
+
 
 class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLeader):
     def get_my_teams(self):
@@ -251,11 +260,29 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
 
         return data
 
+    def finish_project(self):
+        team_id = self.kwargs.get("team_id")
+        user_id = self.request.user.id
+        try:
+            team = Team.objects.select_related("leader").get(id=team_id)
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
+
+        self.check_leader(user_id, team.leader.id)
+
+        team.is_accomplished = True
+        team.save()
+
+        return {"detail": f"{team.title} is accomplished."}
+
     def ban_user_from_team(self):
         team_id = self.kwargs.get("team_id")
         user_id = self.request.user.id
 
-        team = Team.objects.select_related("leader").get(id=team_id)
+        try:
+            team = Team.objects.select_related("leader").get(id=team_id)
+        except Team.DoesNotExist:
+            raise notfound_exception.TeamNotFoundError()
 
         self.check_leader(user_id, team.leader.id)
 
