@@ -82,7 +82,7 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
         if not (0 < len(data.get("title")) <= 30):
             raise exception.TeamNameLengthError()
 
-        valid_genres = ["웹", "앱", "게임"]
+        valid_genres = ["웹", "안드로이드", "IOS", "크로스플랫폼", "게임", "기타"]
         if data.get("genre") not in valid_genres:
             raise exception.TeamGenreNotValidError()
 
