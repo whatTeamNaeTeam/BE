@@ -113,6 +113,12 @@ class UserManageActivityDetailView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+    def patch(self, request, *args, **kwargs):
+        myteam_service = MyTeamManageService(request, **kwargs)
+        data = myteam_service.finish_project()
+
+        return Response(data, status=status.HTTP_202_ACCEPTED)
+
     def delete(self, request, *args, **kwargs):
         myteam_service = MyTeamManageService(request, **kwargs)
         data = myteam_service.ban_user_from_team()
