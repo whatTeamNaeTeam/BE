@@ -215,9 +215,12 @@ class MyTeamManageService(BaseServiceWithCheckOwnership, BaseServiceWithCheckLea
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
+
         self.check_leader(user_id, team.leader.id)
         S3Utils.delete_team_image_on_s3(team.uuid)
         team.delete()
+
+        cache.delete(f"team_detail_{team_id}")
 
         return {"detail": "Success to delete team"}
 
