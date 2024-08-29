@@ -42,6 +42,7 @@ class AdminTeamService(BaseService, TeamListPagenationSize10):
         if status:
             for team in teams:
                 S3Utils.delete_team_image_on_s3(team.uuid)
+            cache.delete_many([f"team_detail_{team.id}" for team in teams])
         cnt, _ = teams.delete()
         if cnt:
             return {"detail": "Success to reject teams"}

@@ -16,6 +16,7 @@ class LikeService(BaseService):
 
         cache_key = f"team_detail_{team_id}"
         team_cache = cache.get(cache_key)
+        cache_update = False
 
         if team_cache is not None:
             cache_update = True
