@@ -37,6 +37,7 @@ class AdminUserService(BaseService, UserListPagenationSize10):
         if status:
             for user_id in user_ids:
                 S3Utils.delete_user_image_on_s3(user_id)
+            cache.delete_many([f"user_profile_{id}" for id in user_ids])
         cnt, _ = User.objects.filter(id__in=user_ids, is_approved=status).delete()
         if cnt:
             return {"detail": "Success to reject users"}
