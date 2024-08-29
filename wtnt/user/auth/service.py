@@ -83,7 +83,10 @@ class RegisterService(BaseService):
 
 class RefreshService(BaseService):
     def extract_refresh_token(self):
-        _, access_token = self.request.META.get("HTTP_AUTHORIZATION").split(" ")
+        authorization = self.request.META.get("HTTP_AUTHORIZATION")
+        if authorization is None:
+            raise token_exception.NoTokenInAuthorizationHeaderError()
+        _, access_token = authorization.split(" ")
         try:
             user_id = AccessToken(access_token, verify=False).payload.get("user_id")
         except TokenError:
