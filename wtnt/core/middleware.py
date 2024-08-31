@@ -22,9 +22,11 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
             or is_refresh
             and (response.status_code == status.HTTP_200_OK or response.status_code == status.HTTP_201_CREATED)
         ):
+            registered = response.data.get("registered", None)
+
             if request.META.get("HTTP_X_FROM", None) == "web":
                 response.set_cookie(
-                    "temp" if is_valid else "access",
+                    "access" if registered else "temp",
                     response.headers.get("access", None),
                     httponly=True,
                     samesite="none",
@@ -34,8 +36,12 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
                 if is_valid:
                     response.headers["temp"] = response.headers["access"]
                     del response.headers["access"]
+            else:
+                if not registered:
+                    response.headers["temp"] = response.headers["access"]
+                    del response.headers["access"]
 
-                response.content = response.render().rendered_content
+            response.content = response.render().rendered_content
 
         elif is_logout and response.status_code == status.HTTP_204_NO_CONTENT:
             for cookie_name in request.COOKIES:
