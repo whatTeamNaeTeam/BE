@@ -6,12 +6,14 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
         super().__init__(get_response)
         self.API = ["github/login", "callback/github"]
+        self.REGISTER = "github/finish"
         self.REFRESH = "token/refresh"
         self.LOGOUT = "logout"
 
     def process_response(self, request, response):
         path = request.path_info
         is_valid = any(api in path for api in self.API)
+        is_register = True if self.REGISTER in path else False
         is_refresh = True if self.REFRESH in path else False
         is_logout = True if self.LOGOUT in path else False
 
@@ -44,13 +46,34 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
                     samesite="none",
                     secure=True,
                     max_age=0,
-                    domain="whatmeow.shop",
+                    domain=".whatmeow.shop",
                 )
 
             if request.META.get("HTTP_X_FROM", None) == "web":
                 del response.headers["access"]
 
             response.content = response.render().rendered_content
+
+        if is_register:
+            token = request.COOKIES.get("temp")
+            response.set_cookie(
+                "temp",
+                value="",
+                httponly=True,
+                samesite="none",
+                secure=True,
+                max_age=0,
+                domain=".whatmeow.shop",
+            )
+
+            response.set_cookie(
+                "access",
+                token,
+                httponly=True,
+                samesite="none",
+                secure=True,
+                domain=".whatmeow.shop",
+            )
 
         return response
 
