@@ -22,14 +22,15 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
         ):
             if request.META.get("HTTP_X_FROM", None) == "web":
                 response.set_cookie(
-                    "access",
+                    "temp" if is_valid else "access",
                     response.headers.get("access", None),
                     httponly=True,
                     samesite="none",
                     secure=True,
-                    domain="whatmeow.shop",
+                    domain=".whatmeow.shop",
                 )
                 if is_valid:
+                    response.headers["temp"] = response.headers["access"]
                     del response.headers["access"]
 
                 response.content = response.render().rendered_content
