@@ -82,12 +82,17 @@ class AttachJWTFromCookieToHeaderMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
         super().__init__(get_response)
         self.NOT_API = ["github/login", "callback/github"]
+        self.REGISTER = "github/finish"
 
     def process_request(self, request):
         path = request.path_info
         is_valid = any(api in path for api in self.NOT_API)
+        is_register = True if self.REGISTER in path else False
 
         if not is_valid:
             if request.META.get("HTTP_X_FROM", None) == "web":
                 if request.COOKIES.get("access"):
                     request.META["HTTP_AUTHORIZATION"] = f"Bearer {request.COOKIES.get('access', None)}"
+                if is_register:
+                    if request.COOKIES.get("temp"):
+                        request.META["HTTP_AUTHORIZATION"] = f"Bearer {request.COOKIES.get('temp', None)}"
