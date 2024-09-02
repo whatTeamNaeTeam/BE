@@ -53,7 +53,12 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
         ]
 
     def get_image_url(self, obj):
-        return obj.image + "image.jpg"
+        if obj.image is None:
+            return None
+        else:
+            # 나중에 이미지 여러장을 지원하기 위해
+            image_url = obj.image + "image.jpg"
+            return [image_url]
 
     from rest_framework.fields import empty
 
@@ -169,6 +174,8 @@ class TeamListSerializer(LeaderInfoIncludedSerializer):
         ]
 
     def get_image_url(self, obj):
+        if obj.image is None:
+            return None
         return obj.image + "thumnail.jpg"
 
 
