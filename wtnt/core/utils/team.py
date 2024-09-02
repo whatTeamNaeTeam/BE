@@ -74,11 +74,10 @@ class TeamResponse:
 
         leader_id = team_data["leader_info"]["id"]
         team_id = team_data["id"]
-
+        team_data["is_like"] = False if user_id is None else TeamResponse.is_like(team_id, user_id)
         return {
             "team": team_data,
             "is_leader": TeamResponse.is_leader(leader_id, user_id),
-            "is_like": False if user_id is None else TeamResponse.is_like(team_id, user_id),
         }
 
 
