@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from rest_framework.response import Response
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -45,11 +46,18 @@ class AdminUserService(BaseService, UserListPagenationSize10):
             raise notfound_exception.UserNotFoundError()
 
     def get_approved_users(self):
-        queryset = User.objects.filter(is_approved=True, is_superuser=False).order_by("student_num")
-        paginated = self.paginate_queryset(queryset, self.request, view=self)
-        serializer = ApproveUserSerializer(paginated, many=True)
+        size = self.request.GET.get("size")
+        if size == "all":
+            queryset = User.objects.filter(is_approved=True, is_superuser=False)
+            serializer = ApproveUserSerializer(queryset, many=True)
 
-        return self.get_paginated_response(serializer.data)
+            return Response(serializer.data)
+        else:
+            queryset = User.objects.filter(is_approved=True, is_superuser=False).order_by("student_num")
+            paginated = self.paginate_queryset(queryset, self.request, view=self)
+            serializer = ApproveUserSerializer(paginated, many=True)
+
+            return self.get_paginated_response(serializer.data)
 
     def search_users(self):
         keyword = self.request.query_params.get("keyword")

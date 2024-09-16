@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from rest_framework.response import Response
 
 import core.exception.notfound as notfound_exception
 import core.exception.team as team_exception
@@ -50,11 +51,18 @@ class AdminTeamService(BaseService, TeamListPagenationSize10):
             raise notfound_exception.TeamNotFoundError()
 
     def get_approved_teams(self):
-        queryset = Team.objects.filter(is_approved=True).order_by("id").select_related("leader")
-        paginated = self.paginate_queryset(queryset, self.request, view=self)
-        serializer = ApproveTeamSerializer(paginated, many=True)
+        size = self.request.GET.get("size", None)
 
-        return self.get_paginated_response(serializer.data)
+        if size == "all":
+            queryset = Team.objects.filter(is_approved=True)
+            serializer = ApproveTeamSerializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            queryset = Team.objects.filter(is_approved=True).order_by("id").select_related("leader")
+            paginated = self.paginate_queryset(queryset, self.request, view=self)
+            serializer = ApproveTeamSerializer(paginated, many=True)
+
+            return self.get_paginated_response(serializer.data)
 
     def serach_teams(self):
         keyword = self.request.query_params.get("keyword")
