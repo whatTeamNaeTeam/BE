@@ -3,9 +3,6 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
-
-import wtnt.settings as api_settings
-
 from core.utils.redis import RedisUtils
 from core.service import BaseService
 import core.exception.login as login_exception
@@ -19,15 +16,21 @@ User = get_user_model()
 class AuthService(BaseService):
     def determine_callback_url(self):
         is_web = self.request.META.get("HTTP_X_FROM", None)
+        is_debug = self.request.META.get("HTTP_X_DEBUG", None)
+        is_admin = self.request.META.get("HTTP_X_ADMIN", None)
+
         if is_web == "web":
-            if api_settings.DEBUG:
+            if is_debug:
                 return "https://local.whatmeow.shop:3001/oauth/callback/github"
             else:
-                return "https://test.whatmeow.shop/oauth/callback/github"
+                if is_admin:
+                    return "https://admin.whatmeow.shop/oauth/callback/github"
+                else:
+                    return "https://test.whatmeow.shop/oauth/callback/github"
         elif is_web == "app":
             return "myapp://auth"
         else:
-            if api_settings.DEBUG:
+            if is_debug:
                 return "http://localhost:8000/api/auth/github/callback"
             else:
                 return "https://api.whatmeow.shop/api/auth/github/callback"
