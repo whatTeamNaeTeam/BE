@@ -23,7 +23,6 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
             and (response.status_code == status.HTTP_200_OK or response.status_code == status.HTTP_201_CREATED)
         ):
             registered = response.data.get("registered", None)
-
             if request.META.get("HTTP_X_FROM", None) == "web":
                 response.set_cookie(
                     "access" if registered else "temp",
@@ -34,7 +33,6 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
                     domain=".whatmeow.shop",
                 )
                 if is_valid:
-                    response.headers["temp"] = response.headers["access"]
                     del response.headers["access"]
             else:
                 if not registered:
@@ -61,25 +59,28 @@ class AttachJWTFromHeaderToCookieMiddleware(MiddlewareMixin):
             response.content = response.render().rendered_content
 
         if is_register:
-            token = request.COOKIES.get("temp")
-            response.set_cookie(
-                "temp",
-                value="",
-                httponly=True,
-                samesite="none",
-                secure=True,
-                max_age=0,
-                domain=".whatmeow.shop",
-            )
+            if request.META.get("HTTP_X_FROM", None) == "web":
+                token = request.COOKIES.get("temp")
+                response.set_cookie(
+                    "temp",
+                    value="",
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+                    max_age=0,
+                    domain=".whatmeow.shop",
+                )
 
-            response.set_cookie(
-                "access",
-                token,
-                httponly=True,
-                samesite="none",
-                secure=True,
-                domain=".whatmeow.shop",
-            )
+                response.set_cookie(
+                    "access",
+                    token,
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+                    domain=".whatmeow.shop",
+                )
+            else:
+                request.headers["access"] = request.headers["temp"]
 
         return response
 
