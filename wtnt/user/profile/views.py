@@ -35,6 +35,16 @@ class UserProfileView(APIView):
         return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
+class UserProfileSecretView(APIView):
+    permission_classes = [IsApprovedUser]
+
+    def get(self, request):
+        profile_service = ProfileService(request)
+        data = profile_service.get_profile_without_id()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class UserTechView(APIView):
     permission_classes = [AllowAny]
 

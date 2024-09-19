@@ -42,6 +42,17 @@ class ProfileService(BaseServiceWithCheckOwnership):
         except User.DoesNotExist:
             raise notfound_exception.UserNotFoundError()
 
+    def get_profile_without_id(self):
+        user_id = self.request.user.id
+        cache_key = f"user_profile_{user_id}"
+
+        user_data = cache.get(cache_key)
+        if user_data is None:
+            user_data = self.get_profile_data_from_id(user_id)
+            cache.set(cache_key, user_data, timeout=60 * 5)
+
+        return ProfileResponse.make_data(user_data, user_id)
+
     def process_response_data(self):
         user_id = self.kwargs.get("user_id")
         owner_id = self.request.user.id
