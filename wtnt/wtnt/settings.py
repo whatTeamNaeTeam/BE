@@ -39,7 +39,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 from corsheaders.defaults import default_headers
 
-CORS_ALLOW_HEADERS = list(default_headers) + ["x-from"]
+CORS_ALLOW_HEADERS = list(default_headers) + ["x-from", "x-admin", "x-debug"]
 CSRF_TRUSTED_ORIGINS = ["https://api.whatmeow.shop"]
 AUTH_USER_MODEL = "user.CustomUser"
 
@@ -128,7 +128,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "core.middleware.AttachJWTFromHeaderToCookieMiddleware",
+    "core.middleware.CustomLoginMiddleware",
+    "core.middleware.CustomRegisterMiddleware",
+    "core.middleware.CustomRefreshMiddleware",
+    "core.middleware.CustomLogoutMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
