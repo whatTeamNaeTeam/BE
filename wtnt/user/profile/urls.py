@@ -9,6 +9,7 @@ from .views import (
     UserLikeTeamView,
     NotApprovedTeamView,
     UserProfileSecretView,
+    UserProfileOwnerCheckView,
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     path("team-manage/detail/<int:team_id>", UserManageActivityDetailView.as_view(), name="profile-team-manage-detail"),
     path("<int:user_id>/not-approved", NotApprovedTeamView.as_view(), name="not-approved-team"),
     path("", UserProfileSecretView.as_view(), name="user-profile-secret"),
+    path("check-owner/<int:user_id>", UserProfileOwnerCheckView.as_view(), name="profile-check-owner"),
 ]

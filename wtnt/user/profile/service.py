@@ -150,6 +150,15 @@ class ProfileService(BaseServiceWithCheckOwnership):
 
             return data
 
+    def check_owner(self):
+        owner_id = self.kwargs.get("user_id")
+        user_id = self.request.user.id
+
+        if owner_id == user_id:
+            return {"is_owner": True}
+        else:
+            return {"is_owner": False}
+
 
 class MyActivityServcie(BaseServiceWithCheckOwnership):
     def get_my_activity(self):

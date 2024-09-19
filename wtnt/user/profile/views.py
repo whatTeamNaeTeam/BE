@@ -45,6 +45,14 @@ class UserProfileSecretView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+class UserProfileOwnerCheckView(APIView):
+    def get(self, request, *args, **kwargs):
+        profile_service = ProfileService(request, **kwargs)
+        data = profile_service.check_owner()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class UserTechView(APIView):
     permission_classes = [AllowAny]
 
