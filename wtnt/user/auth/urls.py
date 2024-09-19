@@ -6,6 +6,7 @@ from .views import (
     FinishGithubLoginView,
     WtntTokenRefreshView,
     EmailVerifyView,
+    GetUserDataByJWT,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("logout", LogoutView.as_view(), name="logout"),
     path("token/refresh", WtntTokenRefreshView.as_view(), name="token-refresh"),
     path("email", EmailVerifyView.as_view(), name="verify-email"),
+    path("get-user", GetUserDataByJWT.as_view(), name="get-user"),
 ]
