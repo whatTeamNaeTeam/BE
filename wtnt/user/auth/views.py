@@ -95,6 +95,14 @@ class FinishGithubLoginView(APIView):
         return Response({"user": data}, status=status.HTTP_201_CREATED)
 
 
+class GetUserDataByJWT(APIView):
+    def get(self, request):
+        auth_service = AuthService(request)
+        data = auth_service.get_user()
+
+        return Response({"user": data}, status=status.HTTP_200_OK)
+
+
 class WtntTokenRefreshView(TokenRefreshView):
     def post(self, request: Request, *args, **kwargs):
         refresh_service = RefreshService(request)

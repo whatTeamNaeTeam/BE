@@ -14,6 +14,13 @@ User = get_user_model()
 
 
 class AuthService(BaseService):
+    def get_user(self):
+        user_id = self.request.user.id
+        user = User.objects.get(pk=user_id)
+        serializer = UserSerializer(user)
+
+        return serializer.data
+
     def determine_callback_url(self):
         is_web = self.request.META.get("HTTP_X_FROM", None)
         is_debug = self.request.META.get("HTTP_X_DEBUG", None)
