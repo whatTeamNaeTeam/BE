@@ -49,3 +49,8 @@ class EmailCodeNotMatchAfterAuthError(APIException):
 class EmailCeleryError(APIException):
     status_code = 400
     default_detail = {"message": "이메일 발송 도중 문제가 발생했습니다.", "code": "0133"}
+
+
+class UserExplainTooLong(APIException):
+    status_code = 400
+    default_detail = {"message": "유저의 자기소개 글이 너무 깁니다.", "code": "0140"}
