@@ -16,8 +16,11 @@ User = get_user_model()
 class AuthService(BaseService):
     def get_user(self):
         user_id = self.request.user.id
-        user = User.objects.get(pk=user_id)
-        serializer = UserSerializer(user)
+        try:
+            user = User.objects.get(pk=user_id)
+            serializer = UserSerializer(user)
+        except User.DoesNotExist:
+            raise None
 
         return serializer.data
 

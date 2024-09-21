@@ -59,6 +59,8 @@ class TeamResponse:
 
         if "urls" in strs:
             _dict["url"] = strs["urls"]
+        else:
+            _dict["url"] = None
 
         return _dict
 

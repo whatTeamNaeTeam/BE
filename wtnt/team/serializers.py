@@ -1,7 +1,16 @@
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework import serializers
+from rest_framework.settings import api_settings
+from rest_framework.fields import get_error_detail, SkipField
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from collections.abc import Mapping
+
 from .models import Team, TeamTech, TeamApply, Likes
 from core.fields import BinaryField
 import core.exception.team as exception
+
+serializers.ValidationError
 
 
 class LeaderInfoIncludedSerializer(serializers.ModelSerializer):
@@ -52,6 +61,37 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
             "is_approved",
         ]
 
+    def validate_title(self, value):
+        if not (2 < len(value) <= 30):
+            raise exception.TeamNameLengthError()
+
+        if self.instance and self.instance.pk:
+            if Team.objects.filter(title=value).exclude(pk=self.instance.pk).exists():
+                raise exception.TeamNameDuplicateError()
+        else:
+            if Team.objects.filter(title=value).exists():
+                raise exception.TeamNameDuplicateError()
+
+        return value
+
+    def validate_genre(self, value):
+        valid_genres = ["웹", "안드로이드", "IOS", "크로스플랫폼", "게임", "기타"]
+        if value not in valid_genres:
+            raise exception.TeamGenreNotValidError()
+
+        return value
+
+    def validate_explain(self, value):
+        if value is not None and not (0 < len(value) <= 2000):
+            raise exception.TeamExplainLengthError()
+
+        return value
+
+    def validate_url(self, value):
+        print(value)
+        if value is not None and len(value) == 0:
+            raise exception.TeamUrlLengthError()
+
     def get_image_url(self, obj):
         if obj.image is None:
             return None
@@ -60,51 +100,48 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
             image_url = obj.image + "image.jpg"
             return [image_url]
 
-    from rest_framework.fields import empty
+    def to_internal_value(self, data):
+        """
+        Dict of native values <- Dict of primitive datatypes.
+        """
+        if not isinstance(data, Mapping):
+            message = self.error_messages["invalid"].format(datatype=type(data).__name__)
+            raise ValidationError({api_settings.NON_FIELD_ERRORS_KEY: [message]}, code="invalid")
 
-    def run_validation(self, data=empty):
-        (is_empty_value, data) = self.validate_empty_values(data)
-        if is_empty_value:
-            return data
+        ret = {}
+        errors = {}
+        fields = self._writable_fields
 
-        value = self.to_internal_value(data)
-        self.run_validators(value)
-        value = self.validate(value)
+        for field in fields:
+            validate_method = getattr(self, "validate_" + field.field_name, None)
+            primitive_value = field.get_value(data)
+            try:
+                if validate_method is not None:
+                    validated_value = validate_method(primitive_value)
+                validated_value = field.run_validation(primitive_value)
+            except APIException as api_exception:
+                raise api_exception
+            except ValidationError as exc:
+                errors[field.field_name] = exc.detail
+            except DjangoValidationError as exc:
+                errors[field.field_name] = get_error_detail(exc)
+            except SkipField:
+                pass
+            else:
+                self.set_value(ret, field.source_attrs, validated_value)
 
-        return value
+        if errors:
+            raise ValidationError(errors)
 
-    def validate(self, data):
-        url = data.get("url", None)
-        explain = data.get("explain", None)
-
-        if self.instance and self.instance.pk:
-            if Team.objects.filter(title=self.instance.title).exclude(pk=self.instance.pk).exists():
-                raise exception.TeamNameDuplicateError()
-        else:
-            if Team.objects.filter(title=data.get("title")).exists():
-                raise exception.TeamNameDuplicateError()
-
-        if not (0 < len(data.get("title")) <= 30):
-            raise exception.TeamNameLengthError()
-
-        valid_genres = ["웹", "안드로이드", "IOS", "크로스플랫폼", "게임", "기타"]
-        if data.get("genre") not in valid_genres:
-            raise exception.TeamGenreNotValidError()
-
-        if explain is not None and not (0 < len(explain.decode()) <= 2000):
-            raise exception.TeamExplainLengthError()
-
-        if url is not None and len(url.decode()) == 0:
-            raise exception.TeamUrlLengthError()
-
-        return data
+        return ret
 
     def create(self, validated_data):
         techs = validated_data.pop("category")
-        team = Team.objects.create(**validated_data)
+        with transaction.atomic():
+            team = Team.objects.create(**validated_data)
 
-        for tech in techs:
-            TeamTech.objects.create(team=team, **tech)
+            for tech in techs:
+                TeamTech.objects.create(team=team, **tech)
 
         return team
 
