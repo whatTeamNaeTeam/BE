@@ -40,7 +40,7 @@ class TeamService(BaseServiceWithCheckLeader, TeamPagination):
         team_id = self.kwargs.get("team_id")
 
         try:
-            team = Team.objects.prefetch_related("category").get(id=team_id)
+            team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
             raise notfound_exception.TeamNotFoundError()
         self.check_leader(user_id, team.leader.id)
