@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.settings import api_settings
 from rest_framework.fields import get_error_detail, SkipField
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from collections.abc import Mapping
 
 from .models import Team, TeamTech, TeamApply, Likes
@@ -136,10 +137,11 @@ class TeamCreateSerializer(LeaderInfoIncludedSerializer):
 
     def create(self, validated_data):
         techs = validated_data.pop("category")
-        team = Team.objects.create(**validated_data)
+        with transaction.atomic():
+            team = Team.objects.create(**validated_data)
 
-        for tech in techs:
-            TeamTech.objects.create(team=team, **tech)
+            for tech in techs:
+                TeamTech.objects.create(team=team, **tech)
 
         return team
 
