@@ -33,7 +33,7 @@ WAP 동아리에서는 정형화된 방식이 없고 그때그때마다 방법�
 ### 배포 링크
 
 서버 -> [SWAGGER](https://api.whatmeow.shop/swagger) <br>
-프론트 -> 현재 미배포(추후 업데이트 예정) <br>
+프론트 -> [관리자](https://admin.whatmeow.shop), [사용자](https://test.whatmeow.shop) <br>
 자세한 내용은 [Notion](https://taewon-note.notion.site/W-A-P-ec03ad1ba4e64dbf8c127e5dfce7c564?pvs=4)에서 볼 수 있습니다.
 
 ---
