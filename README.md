@@ -41,15 +41,15 @@ WAP 동아리에서는 정형화된 방식이 없고 그때그때마다 방법�
 #### Redis 캐시 서버 도입
 
 부하테스트 도구인 Locust를 활용해 부하가 크게 몰릴 것으로 예정되는 팀 빌딩 시간을 상정해 <br>
-80개의 클라이언트가 1.5-2초 간격으로 유저 프로필, 팀 상세 페이지에 접근하는 상황으로 테스트를 진행했습니다.
-![캐시적용전](https://github.com/user-attachments/assets/a58adbe6-f752-47cf-ae1a-ddcfb02762ba)
+80개의 클라이언트가 1.5-2초 간격으로 유저 프로필, 팀 상세 페이지에 접근하는 상황으로 테스트를 진행했습니다. <br>
+![캐시적용전](https://github.com/user-attachments/assets/a58adbe6-f752-47cf-ae1a-ddcfb02762ba) <br>
 
-서버의 부족한 성능을 감안하더라도 평균 응답 시간이 3000ms로 사용자의 사용 경험에 큰 불편함이 있을 것으로 예상되었습니다.
+서버의 부족한 성능을 감안하더라도 평균 응답 시간이 약 3000ms로 사용자의 사용 경험에 큰 불편함이 있을 것으로 예상되었습니다. <br>
 
-![캐시적용후](https://github.com/user-attachments/assets/0212aff1-6fed-4ae6-82f8-85444db3bf94)
+![캐시적용후](https://github.com/user-attachments/assets/0212aff1-6fed-4ae6-82f8-85444db3bf94) <br>
 
 Redis를 활용해 캐시 적용 후 같은 조건으로 실시한 테스트입니다. <br>
-캐시 서버에 데이터가 모여 캐시 히트율이 올라가면서 평균 응답 시간이 약 1000ms로 빨라져 약 66.7%의 향상률을 보였습니다.
+캐시 서버에 데이터가 모여 캐시 히트율이 올라가면서 평균 응답 시간이 약 1000ms로 빨라져 약 66.7%의 향상률을 보였습니다. <br><br>
 
 #### Celery-Beat 조회수 업데이트 로직
 
@@ -66,7 +66,7 @@ Redis를 활용해 캐시 적용 후 같은 조건으로 실시한 테스트입�
 
    Crontab으로 자정마다 Celery Beat 스케쥴링을 통해 조회수 관련 Redis 데이터를 삭제 해 조회수를 다시 집계할 수 있도록 했습니다.
 
-  ![image](https://github.com/user-attachments/assets/7f7ba22f-5064-4f14-a7f5-18fa3170d1ae)
+  ![image](https://github.com/user-attachments/assets/7f7ba22f-5064-4f14-a7f5-18fa3170d1ae) <br><br>
 
    
 - 캐시된 게시물에 대한 조회수 업데이트 로직
@@ -77,7 +77,20 @@ Redis를 활용해 캐시 적용 후 같은 조건으로 실시한 테스트입�
    > 2. 여기에 추가적으로 조회수가 업데이트 된 게시물이라면 Redis의 view_updated 키에 {post_id}를 SADD 명령으로 추가 <br>
    > 3. 캐시 데이터의 지속시간을 5분으로 설정해놨으므로 3분마다 Celery Beat를 활용해 DB에 bulk update
 
-   ![image](https://github.com/user-attachments/assets/6f4eb5d0-d2bf-4ad5-8ed0-77adc535a0ec)
+   ![image](https://github.com/user-attachments/assets/6f4eb5d0-d2bf-4ad5-8ed0-77adc535a0ec) <br><br>
 
 
 ---
+
+#### 커스텀 에러 코드 반환
+
+개발 도중 프론트 측에서 기존의 상태 코드로는 어떤 에러인지 특정하기 어려워 디버깅의 난이도가 높으며, <br>
+어디에서 발생한 에러인지 세분화된 에러 처리를 위한 추가 정보가 필요하다는 의견을 냈습니다. <br><br>
+이에 따라 프론츠의 디버깅 편의 증진 및 에러 세분화를 통한 사용자 경험 개선을 위해 에러 코드를 정의해 사용하자는 결론을 내렸습니다. <br>
+
+회의를 통해 에러의 범주를 정하고 적용했습니다. *[커스텀 에러 코드 명세서](https://taewon-note.notion.site/2d9162c02bb04c64a31bc67dced13efb)* <br>
+ 
+![image](https://github.com/user-attachments/assets/3eef850c-447e-4911-bc42-36509a7a09cd) <br>
+Exception을 종류별로 구분해 유지 보수하기 용이하게 폴더 구조를 구성하였습니다. <br>
+
+~~에러 코드 세분화로 인한 프론트 다양한 응답은 반영 후 캡쳐 예정~~
